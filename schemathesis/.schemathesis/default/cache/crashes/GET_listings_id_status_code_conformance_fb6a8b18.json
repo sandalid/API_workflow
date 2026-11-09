@@ -1,0 +1,98 @@
+{
+  "operation": "GET /listings/{id}",
+  "method": "GET",
+  "path_template": "/listings/{id}",
+  "fingerprint": "fb6a8b18",
+  "case_id": "XRQJOX",
+  "code_sample": "curl -X GET https://api-qa.redspur.com/api/listings/cmvarpj0u0067armb87izrkyx",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/listings/cmvarpj0u0067armb87izrkyx",
+      "url_template": "https://api-qa.redspur.com/api/listings/{id}",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "XRQJOX"
+      },
+      "response": {
+        "status_code": 429,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 05:46:51 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "84",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "retry-after": "56",
+          "etag": "W/\"54-42D1wjychKcC0TQvTay9LxgBFPw\""
+        },
+        "body": "{\"success\":false,\"statusCode\":429,\"message\":\"ThrottlerException: Too Many Requests\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 429\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 0.006029599986504763,
+          "mode": "positive"
+        },
+        "components": {
+          "PATH": "positive"
+        },
+        "phase": {
+          "name": "fuzzing",
+          "data": {
+            "type": "FuzzingPhaseData",
+            "description": "Positive test case",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "mutations": []
+          }
+        },
+        "pool_draws": [
+          {
+            "location": "path",
+            "parameter_name": "id",
+            "resource_name": "Listing",
+            "resource_field": "id",
+            "source_operation": "GET /listings/{id}",
+            "source_status": 200,
+            "source_identity": null,
+            "source_input": false,
+            "source_query": null
+          }
+        ],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/listings/{id}",
+      "path_parameters": {
+        "id": "cmvarpj0u0067armb87izrkyx"
+      },
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /listings/{id}"
+    }
+  ]
+}

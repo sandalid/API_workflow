@@ -1,0 +1,94 @@
+{
+  "operation": "GET /sellers/me/listings",
+  "method": "GET",
+  "path_template": "/sellers/me/listings",
+  "fingerprint": "f30f22f7",
+  "case_id": "kerq6J",
+  "code_sample": "curl -X GET 'https://api-qa.redspur.com/api/sellers/me/listings?page=1&limit=20'",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/sellers/me/listings?page=1&limit=20",
+      "url_template": "https://api-qa.redspur.com/api/sellers/me/listings",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "kerq6J"
+      },
+      "response": {
+        "status_code": 401,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:59:20 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "59",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"3b-M+i3T6dfWiQASdRhxO6RsfD2hsM\""
+        },
+        "body": "{\"success\":false,\"statusCode\":401,\"message\":\"Unauthorized\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 401\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 2.6500027161091566e-05,
+          "mode": "positive"
+        },
+        "components": {
+          "QUERY": "positive"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "All required and 2 optional properties",
+            "location": null,
+            "parameter": null,
+            "parameter_location": "QUERY",
+            "scenario": "object_required_and_optional"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "QUERY": {
+            "page": 1,
+            "limit": 20
+          }
+        }
+      },
+      "path": "/sellers/me/listings",
+      "path_parameters": {},
+      "query": {
+        "page": "1",
+        "limit": "20"
+      },
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /sellers/me/listings"
+    }
+  ]
+}

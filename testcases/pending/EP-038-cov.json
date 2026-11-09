@@ -1,0 +1,68 @@
+{
+ "cases": [
+  {
+   "ep": "EP-038",
+   "key": "COV:expired-token-seller",
+   "test_type": "Negative",
+   "scenario": "Seller screen calls with an expired/invalid Bearer token",
+   "role": "user",
+   "preconditions": "Expired JWT for owner",
+   "steps": "GET /listings/<own draft> with expired token",
+   "expected": "Guard never rejects (200 as guest for public states; pending/owner-only states 404). No 401.",
+   "actual": "Not run",
+   "source": "coverage gap: audit Declared Contract (OptionalJwtAuthGuard) + SellerListingDetail.tsx:89",
+   "automation": "Manual",
+   "result": "NOT RUN",
+   "run_date": "2026-11-09",
+   "notes": "Not run: needs an expired token."
+  },
+  {
+   "ep": "EP-038",
+   "key": "COV:rejected-owner-view",
+   "test_type": "Functional",
+   "scenario": "Seller opens own rejected listing on status screen (Flow 18)",
+   "role": "user",
+   "preconditions": "Rejected listing owned by test seller (none on QA)",
+   "steps": "GET with owner token",
+   "expected": "200",
+   "actual": "Not run",
+   "source": "coverage gap: audit SellerListingStatus.tsx:36 + finding #1",
+   "automation": "Manual",
+   "result": "BLOCKED",
+   "run_date": "2026-11-09",
+   "notes": "BLOCKED-style prerequisite: no rejected listing in fixtures _states."
+  },
+  {
+   "ep": "EP-038",
+   "key": "COV:seller-b-views-seller-a-draft",
+   "test_type": "Security/Auth",
+   "scenario": "Another seller (non-owner token) opens seller A pending_approval listing",
+   "role": "user",
+   "preconditions": "Second seller account; pending listing of seller A",
+   "steps": "GET with seller B token",
+   "expected": "404 (pending hidden to non-owner)",
+   "actual": "Not run",
+   "source": "coverage gap: audit service.ts:786 ownership rule",
+   "automation": "Manual",
+   "result": "NOT RUN",
+   "run_date": "2026-11-09",
+   "notes": "Missing: second user account (see TC-038-025)."
+  },
+  {
+   "ep": "EP-038",
+   "key": "COV:cache-after-approve",
+   "test_type": "Business Rule",
+   "scenario": "After admin approves a pending listing, anonymous GET returns 200 (shared cache listing:<id> not stale)",
+   "role": "anon",
+   "preconditions": "Pending listing; admin approve (EP-041)",
+   "steps": "Anon GET, admin approve, anon GET",
+   "expected": "404 then 200",
+   "actual": "Not run",
+   "source": "coverage gap: audit Declared Contract (cache key listing:<id>) + Flow 26",
+   "automation": "Manual",
+   "result": "NOT RUN",
+   "run_date": "2026-11-09",
+   "notes": "Needs a disposable pending listing; changes QA data."
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+﻿listing_state,owner(user),admin,anon
+active,200,200,200
+approved,200,200,200
+sold,200,200,200
+inactive,200,200,200
+pending_approval,200,200,404
+draft,200,200,200

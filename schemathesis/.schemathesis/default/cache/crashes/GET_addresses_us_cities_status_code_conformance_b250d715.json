@@ -1,0 +1,89 @@
+{
+  "operation": "GET /addresses/us/cities",
+  "method": "GET",
+  "path_template": "/addresses/us/cities",
+  "fingerprint": "b250d715",
+  "case_id": "Wg3Dgf",
+  "code_sample": "curl -X GET https://api-qa.redspur.com/api/addresses/us/cities",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/addresses/us/cities",
+      "url_template": "https://api-qa.redspur.com/api/addresses/us/cities",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "Wg3Dgf"
+      },
+      "response": {
+        "status_code": 400,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:58:20 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "107",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "98",
+          "x-ratelimit-reset": "37",
+          "cache-control": "public, max-age=86400",
+          "etag": "W/\"6b-VhbMWMkNi/UKzlr67C5rdSGbuRA\""
+        },
+        "body": "{\"success\":false,\"statusCode\":400,\"message\":\"state must be a string\",\"error\":\"Bad Request\",\"field\":\"state\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 400\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 2.1199986804276705e-05,
+          "mode": "negative"
+        },
+        "components": {
+          "QUERY": "negative"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Missing `state` at query",
+            "location": null,
+            "parameter": "state",
+            "parameter_location": "QUERY",
+            "scenario": "missing_parameter"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "QUERY": {}
+        }
+      },
+      "path": "/addresses/us/cities",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /addresses/us/cities"
+    }
+  ]
+}

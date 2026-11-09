@@ -1,0 +1,99 @@
+{
+  "operation": "PATCH /listings/{id}",
+  "method": "PATCH",
+  "path_template": "/listings/{id}",
+  "fingerprint": "4c3f7772",
+  "case_id": "jGH0Mi",
+  "code_sample": "curl -X PATCH https://api-qa.redspur.com/api/listings/0",
+  "sequence": [
+    {
+      "method": "PATCH",
+      "url": "https://api-qa.redspur.com/api/listings/0",
+      "url_template": "https://api-qa.redspur.com/api/listings/{id}",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "jGH0Mi",
+        "Content-Length": "0"
+      },
+      "response": {
+        "status_code": 401,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:58:54 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "59",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"3b-M+i3T6dfWiQASdRhxO6RsfD2hsM\""
+        },
+        "body": "{\"success\":false,\"statusCode\":401,\"message\":\"Unauthorized\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 401\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 4.080001963302493e-05,
+          "mode": "negative"
+        },
+        "components": {
+          "PATH": "positive",
+          "BODY": "negative"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Missing request body",
+            "location": null,
+            "parameter": null,
+            "parameter_location": "BODY",
+            "scenario": "missing_parameter"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [
+          [
+            "path",
+            "id"
+          ]
+        ],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "PATH": {
+            "id": "0"
+          }
+        }
+      },
+      "path": "/listings/{id}",
+      "path_parameters": {
+        "id": "0"
+      },
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "PATCH /listings/{id}"
+    }
+  ]
+}

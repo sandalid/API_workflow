@@ -1,0 +1,88 @@
+{
+  "operation": "GET /help-articles/search",
+  "method": "GET",
+  "path_template": "/help-articles/search",
+  "fingerprint": "aa403154",
+  "case_id": "c7NlLQ",
+  "code_sample": "curl -X GET https://api-qa.redspur.com/api/help-articles/search",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/help-articles/search",
+      "url_template": "https://api-qa.redspur.com/api/help-articles/search",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "c7NlLQ"
+      },
+      "response": {
+        "status_code": 400,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:58:50 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "102",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"66-VfbZO3MJuwrMha2Ki9ZLdQU7p38\""
+        },
+        "body": "{\"success\":false,\"statusCode\":400,\"message\":\"q should not be empty\",\"error\":\"Bad Request\",\"field\":\"q\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 400\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 2.3500004317611456e-05,
+          "mode": "negative"
+        },
+        "components": {
+          "QUERY": "negative"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Missing `q` at query",
+            "location": null,
+            "parameter": "q",
+            "parameter_location": "QUERY",
+            "scenario": "missing_parameter"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "QUERY": {}
+        }
+      },
+      "path": "/help-articles/search",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /help-articles/search"
+    }
+  ]
+}

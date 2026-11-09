@@ -1,0 +1,105 @@
+{
+  "operation": "GET /users/{id}/listings",
+  "method": "GET",
+  "path_template": "/users/{id}/listings",
+  "fingerprint": "61e0043a",
+  "case_id": "3AAvAj",
+  "code_sample": "curl -X GET 'https://api-qa.redspur.com/api/users/0/listings?page=1&x-schemathesis-unknown-property=42'",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/users/0/listings?page=1&x-schemathesis-unknown-property=42",
+      "url_template": "https://api-qa.redspur.com/api/users/{id}/listings",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "3AAvAj"
+      },
+      "response": {
+        "status_code": 400,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:59:35 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "168",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"a8-Oee0FqpRmjz9HvGJEGGKJwcOk24\""
+        },
+        "body": "{\"success\":false,\"statusCode\":400,\"message\":\"property x-schemathesis-unknown-property should not exist\",\"error\":\"Bad Request\",\"field\":\"x-schemathesis-unknown-property\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 400\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 8.100003469735384e-05,
+          "mode": "negative"
+        },
+        "components": {
+          "PATH": "positive",
+          "QUERY": "negative"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Object with unexpected properties",
+            "location": null,
+            "parameter": null,
+            "parameter_location": "QUERY",
+            "scenario": "object_unexpected_properties"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [
+          [
+            "path",
+            "id"
+          ]
+        ],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "PATH": {
+            "id": "0"
+          },
+          "QUERY": {
+            "page": 1,
+            "x-schemathesis-unknown-property": 42
+          }
+        }
+      },
+      "path": "/users/{id}/listings",
+      "path_parameters": {
+        "id": "0"
+      },
+      "query": {
+        "page": "1",
+        "x-schemathesis-unknown-property": "42"
+      },
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /users/{id}/listings"
+    }
+  ]
+}

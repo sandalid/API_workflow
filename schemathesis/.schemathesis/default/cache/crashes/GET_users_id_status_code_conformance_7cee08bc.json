@@ -1,0 +1,112 @@
+{
+  "operation": "GET /users/{id}",
+  "method": "GET",
+  "path_template": "/users/{id}",
+  "fingerprint": "7cee08bc",
+  "case_id": "sEGmMX",
+  "code_sample": "curl -X GET https://api-qa.redspur.com/api/users/0",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/users/0",
+      "url_template": "https://api-qa.redspur.com/api/users/{id}",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "sEGmMX"
+      },
+      "response": {
+        "status_code": 404,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 05:00:21 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "81",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"51-BSAvyUb6malOeWwceEXJJY2DoNE\""
+        },
+        "body": "{\"success\":false,\"statusCode\":404,\"message\":\"User not found\",\"error\":\"Not Found\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 404\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 0.01036230003228411,
+          "mode": "positive"
+        },
+        "components": {
+          "PATH": "positive"
+        },
+        "phase": {
+          "name": "fuzzing",
+          "data": {
+            "type": "FuzzingPhaseData",
+            "description": "Positive test case",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "mutations": []
+          }
+        },
+        "pool_draws": [
+          {
+            "location": "path",
+            "parameter_name": "id",
+            "resource_name": "User",
+            "resource_field": "id",
+            "source_operation": "GET /sellers/{userId}/shop",
+            "source_status": 200,
+            "source_identity": null,
+            "source_input": true,
+            "source_query": null
+          }
+        ],
+        "pool_misses": [],
+        "semantic_draws": [
+          {
+            "path": [
+              "id"
+            ],
+            "type_token": "string",
+            "format_token": null,
+            "pattern_hash": null,
+            "normalized_name": "id",
+            "value": "cmul2gygk001f3kdsiq1zljw8",
+            "source_operation": "GET /categories/tree"
+          }
+        ],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/users/{id}",
+      "path_parameters": {
+        "id": "0"
+      },
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /users/{id}"
+    }
+  ]
+}

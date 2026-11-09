@@ -1,0 +1,88 @@
+{
+  "operation": "GET /addresses/us/zip-lookup",
+  "method": "GET",
+  "path_template": "/addresses/us/zip-lookup",
+  "fingerprint": "07f25712",
+  "case_id": "efdD5F",
+  "code_sample": "curl -X GET 'https://api-qa.redspur.com/api/addresses/us/zip-lookup?zip='",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/addresses/us/zip-lookup?zip=",
+      "url_template": "https://api-qa.redspur.com/api/addresses/us/zip-lookup",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "efdD5F"
+      },
+      "response": {
+        "status_code": 400,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:59:40 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "106",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"6a-QX5gr6F1AvFkye7Diq8IMKWc5YY\""
+        },
+        "body": "{\"success\":false,\"statusCode\":400,\"message\":\"zip should not be empty\",\"error\":\"Bad Request\",\"field\":\"zip\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "positive_data_acceptance",
+          "status": "failure",
+          "message": "Schema-valid request rejected\n\nValid data should have been accepted\nExpected: 2xx, 3xx, 401, 403, 404, 409, 429, 5xx"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 0.00839329999871552,
+          "mode": "positive"
+        },
+        "components": {
+          "QUERY": "positive"
+        },
+        "phase": {
+          "name": "fuzzing",
+          "data": {
+            "type": "FuzzingPhaseData",
+            "description": "Positive test case",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "mutations": []
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/addresses/us/zip-lookup",
+      "path_parameters": {},
+      "query": {
+        "zip": ""
+      },
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /addresses/us/zip-lookup"
+    }
+  ]
+}

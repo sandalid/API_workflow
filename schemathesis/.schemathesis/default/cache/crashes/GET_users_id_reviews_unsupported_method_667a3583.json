@@ -1,0 +1,91 @@
+{
+  "operation": "GET /users/{id}/reviews",
+  "method": "TRACE",
+  "path_template": "/users/{id}/reviews",
+  "fingerprint": "667a3583",
+  "case_id": "kPTp6l",
+  "code_sample": "curl -X TRACE https://api-qa.redspur.com/api/users/0/reviews",
+  "sequence": [
+    {
+      "method": "TRACE",
+      "url": "https://api-qa.redspur.com/api/users/0/reviews",
+      "url_template": "https://api-qa.redspur.com/api/users/{id}/reviews",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "kPTp6l",
+        "Content-Length": "0"
+      },
+      "response": {
+        "status_code": 405,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:59:35 GMT",
+          "content-type": "text/html",
+          "content-length": "166",
+          "connection": "close"
+        },
+        "body": "<html>\r\n<head><title>405 Not Allowed</title></head>\r\n<body>\r\n<center><h1>405 Not Allowed</h1></center>\r\n<hr><center>nginx/1.28.3 (Ubuntu)</center>\r\n</body>\r\n</html>\r\n"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "unsupported_method",
+          "status": "failure",
+          "message": "Wrong response to undeclared method\n\nTRACE returned 405 without required `Allow` header\n\nAdd `Allow` header listing supported methods (required by RFC 9110)"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 1.6400008462369442e-05,
+          "mode": "negative"
+        },
+        "components": {
+          "PATH": "positive"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Unspecified HTTP method: TRACE",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "scenario": "unspecified_http_method"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [
+          [
+            "path",
+            "id"
+          ]
+        ],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "PATH": {
+            "id": "0"
+          }
+        }
+      },
+      "path": "/users/{id}/reviews",
+      "path_parameters": {
+        "id": "0"
+      },
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /users/{id}/reviews"
+    }
+  ]
+}

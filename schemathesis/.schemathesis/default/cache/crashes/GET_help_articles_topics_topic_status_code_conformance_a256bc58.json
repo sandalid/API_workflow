@@ -1,0 +1,104 @@
+{
+  "operation": "GET /help-articles/topics/{topic}",
+  "method": "GET",
+  "path_template": "/help-articles/topics/{topic}",
+  "fingerprint": "a256bc58",
+  "case_id": "vwZiKw",
+  "code_sample": "curl -X GET https://api-qa.redspur.com/api/help-articles/topics/%C2%96",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/help-articles/topics/%C2%96",
+      "url_template": "https://api-qa.redspur.com/api/help-articles/topics/{topic}",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "vwZiKw"
+      },
+      "response": {
+        "status_code": 400,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:59:56 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "112",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "98",
+          "x-ratelimit-reset": "58",
+          "etag": "W/\"70-hLhinckX47F3paXZ+zGfz9c4Tk0\""
+        },
+        "body": "{\"success\":false,\"statusCode\":400,\"message\":\"Validation failed (enum string is expected)\",\"error\":\"Bad Request\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 400\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 0.006563599978107959,
+          "mode": "negative"
+        },
+        "components": {
+          "PATH": "negative"
+        },
+        "phase": {
+          "name": "fuzzing",
+          "data": {
+            "type": "FuzzingPhaseData",
+            "description": "violates `enum` at /properties/topic",
+            "location": "/properties/topic",
+            "parameter": "topic",
+            "parameter_location": "PATH",
+            "mutations": [
+              {
+                "path": [
+                  "topic"
+                ],
+                "parameter_location": "path",
+                "schema_pointer": "/properties/topic",
+                "channel": "schema",
+                "operator": "negate_constraints",
+                "keywords": [
+                  "enum"
+                ],
+                "parameter": "topic",
+                "original_value": null,
+                "new_value": null
+              }
+            ]
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/help-articles/topics/{topic}",
+      "path_parameters": {
+        "topic": "%C2%96"
+      },
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /help-articles/topics/{topic}"
+    }
+  ]
+}

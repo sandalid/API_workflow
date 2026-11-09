@@ -1,0 +1,96 @@
+{
+  "operation": "GET /admin/shipping-reconciliation",
+  "method": "GET",
+  "path_template": "/admin/shipping-reconciliation",
+  "fingerprint": "4edd68c1",
+  "case_id": "4zN0DW",
+  "code_sample": "curl -X GET 'https://api-qa.redspur.com/api/admin/shipping-reconciliation?page=1&limit=20&from='",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/admin/shipping-reconciliation?page=1&limit=20&from=",
+      "url_template": "https://api-qa.redspur.com/api/admin/shipping-reconciliation",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "4zN0DW"
+      },
+      "response": {
+        "status_code": 401,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:58:35 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "59",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"3b-M+i3T6dfWiQASdRhxO6RsfD2hsM\""
+        },
+        "body": "{\"success\":false,\"statusCode\":401,\"message\":\"Unauthorized\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 401\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 2.2099993657320738e-05,
+          "mode": "positive"
+        },
+        "components": {
+          "QUERY": "positive"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "All required and 3 optional properties",
+            "location": null,
+            "parameter": null,
+            "parameter_location": "QUERY",
+            "scenario": "object_required_and_optional"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "QUERY": {
+            "page": 1,
+            "limit": 20,
+            "from": ""
+          }
+        }
+      },
+      "path": "/admin/shipping-reconciliation",
+      "path_parameters": {},
+      "query": {
+        "page": "1",
+        "limit": "20",
+        "from": ""
+      },
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /admin/shipping-reconciliation"
+    }
+  ]
+}

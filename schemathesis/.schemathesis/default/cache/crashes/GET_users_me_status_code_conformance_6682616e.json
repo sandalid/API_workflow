@@ -1,0 +1,84 @@
+{
+  "operation": "GET /users/me",
+  "method": "GET",
+  "path_template": "/users/me",
+  "fingerprint": "6682616e",
+  "case_id": "2nJQMV",
+  "code_sample": "curl -X GET https://api-qa.redspur.com/api/users/me",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/users/me",
+      "url_template": "https://api-qa.redspur.com/api/users/me",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "2nJQMV"
+      },
+      "response": {
+        "status_code": 401,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 05:00:19 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "59",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"3b-M+i3T6dfWiQASdRhxO6RsfD2hsM\""
+        },
+        "body": "{\"success\":false,\"statusCode\":401,\"message\":\"Unauthorized\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 401\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 0.00056310003856197,
+          "mode": "positive"
+        },
+        "components": {},
+        "phase": {
+          "name": "fuzzing",
+          "data": {
+            "type": "FuzzingPhaseData",
+            "description": "Positive test case",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "mutations": []
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/users/me",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /users/me"
+    }
+  ]
+}

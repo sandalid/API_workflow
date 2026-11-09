@@ -1,0 +1,24 @@
+{
+ "conflicts": [
+  {
+   "ep": "EP-032",
+   "topic": "GET /brands ordering: app doc/code comments assume admin-curated/insertion order; code sorts alphabetically",
+   "requirement": "docs/features/brand-drill-down.md:16 (\"admin's own insertion order\"); app code comments Explore.tsx:52-55 (\"in the admin-configured order\"), BrandListing.tsx:26-29 (\"GET /brands returns the admin's own insertion order\")",
+   "spec": "openapi.json declares no ordering, no schema at all for GET /brands 200",
+   "code": "brands.repository.ts:14 (orderBy:{name:'asc'}, alphabetical)",
+   "affected_tcs": ["TC-032-007", "TC-032-008"],
+   "status": "Open",
+   "block": true
+  },
+  {
+   "ep": "EP-032",
+   "topic": "No sortOrder/order column exists on the Brand model at all - the app doc's 'admin-configurable order' premise is unsupported by the data model",
+   "requirement": "App doc/comments imply an admin-configurable brand order exists (same source as CF-032-01)",
+   "spec": "n/a",
+   "code": "prisma/schema.prisma:514-524 (Brand model has no sortOrder/order column, unlike Material); admin.repository.ts:432-433 (admin CRUD read also hard-sorts alphabetically)",
+   "affected_tcs": [],
+   "status": "Open",
+   "block": false
+  }
+ ]
+}

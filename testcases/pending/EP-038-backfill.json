@@ -1,0 +1,1160 @@
+{
+ "cases": [
+  {
+   "ep": "EP-038",
+   "key": "ST:unsupported_method:user",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "405",
+   "response_assertions": "header Allow present",
+   "expected_source": "Documentation",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "TRACE",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       405
+      ]
+     },
+     {
+      "type": "header",
+      "name": "allow",
+      "op": "present"
+     }
+    ]
+   },
+   "business_outcome": "RFC 9110: a 405 response must carry an Allow header"
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:all-other:user",
+   "check_level": "Status-only",
+   "ownership": "n/a",
+   "expected_status": "< 500",
+   "response_assertions": "check not_a_server_error, max_response_time",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "lt": 500
+     },
+     {
+      "type": "check",
+      "name": "not_a_server_error"
+     },
+     {
+      "type": "check",
+      "name": "max_response_time"
+     }
+    ]
+   },
+   "business_outcome": "Scope of the automated verdict: no 5xx (status < 500), check not_a_server_error and check max_response_time on every GET of this role. Other Schemathesis checks are judged by their own Contract cases (status_code_conformance, schema conformance, TRACE/Allow), not here."
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:schema-conformance:user",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "200",
+   "response_assertions": "body conforms to the documented response schema",
+   "expected_source": "OpenAPI spec",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "check",
+      "name": "response_schema_conformance"
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": [
+       "active",
+       "approved",
+       "sold"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:status_code_conformance:user",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "any documented status",
+   "response_assertions": "every returned status is documented in the spec",
+   "expected_source": "OpenAPI spec",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "check",
+      "name": "status_code_conformance"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:unsupported_method:admin",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "405",
+   "response_assertions": "header Allow present",
+   "expected_source": "Documentation",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "TRACE",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       405
+      ]
+     },
+     {
+      "type": "header",
+      "name": "allow",
+      "op": "present"
+     }
+    ]
+   },
+   "business_outcome": "RFC 9110: a 405 response must carry an Allow header"
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:all-other:admin",
+   "check_level": "Status-only",
+   "ownership": "n/a",
+   "expected_status": "< 500",
+   "response_assertions": "check not_a_server_error, max_response_time",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "status",
+      "lt": 500
+     },
+     {
+      "type": "check",
+      "name": "not_a_server_error"
+     },
+     {
+      "type": "check",
+      "name": "max_response_time"
+     }
+    ]
+   },
+   "business_outcome": "Scope of the automated verdict: no 5xx (status < 500), check not_a_server_error and check max_response_time on every GET of this role. Other Schemathesis checks are judged by their own Contract cases (status_code_conformance, schema conformance, TRACE/Allow), not here."
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:schema-conformance:admin",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "200",
+   "response_assertions": "body conforms to the documented response schema",
+   "expected_source": "OpenAPI spec",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "check",
+      "name": "response_schema_conformance"
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": [
+       "active",
+       "approved",
+       "sold"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:status_code_conformance:admin",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "any documented status",
+   "response_assertions": "every returned status is documented in the spec",
+   "expected_source": "OpenAPI spec",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "check",
+      "name": "status_code_conformance"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:unsupported_method:anon",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "405",
+   "response_assertions": "header Allow present",
+   "expected_source": "Documentation",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "TRACE",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       405
+      ]
+     },
+     {
+      "type": "header",
+      "name": "allow",
+      "op": "present"
+     }
+    ]
+   },
+   "business_outcome": "RFC 9110: a 405 response must carry an Allow header"
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:all-other:anon",
+   "check_level": "Status-only",
+   "ownership": "n/a",
+   "expected_status": "< 500",
+   "response_assertions": "check not_a_server_error, max_response_time",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "lt": 500
+     },
+     {
+      "type": "check",
+      "name": "not_a_server_error"
+     },
+     {
+      "type": "check",
+      "name": "max_response_time"
+     }
+    ]
+   },
+   "business_outcome": "Scope of the automated verdict: no 5xx (status < 500), check not_a_server_error and check max_response_time on every GET of this role. Other Schemathesis checks are judged by their own Contract cases (status_code_conformance, schema conformance, TRACE/Allow), not here."
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:schema-conformance:anon",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "200",
+   "response_assertions": "body conforms to the documented response schema",
+   "expected_source": "OpenAPI spec",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "check",
+      "name": "response_schema_conformance"
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": [
+       "active",
+       "approved",
+       "sold"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "ST:status_code_conformance:anon",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "any documented status",
+   "response_assertions": "every returned status is documented in the spec",
+   "expected_source": "OpenAPI spec",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "check",
+      "name": "status_code_conformance"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:draft-owner",
+   "check_level": "Business-rule",
+   "ownership": "owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "Requirement",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "draft"
+     }
+    },
+    "ownership": "owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:draft-admin",
+   "check_level": "Business-rule",
+   "ownership": "non-owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "Requirement",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "draft"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:draft-anon",
+   "check_level": "Business-rule",
+   "ownership": "non-owner",
+   "expected_status": "404",
+   "response_assertions": "",
+   "expected_source": "Requirement",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Conflict",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "draft"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:inactive-owner",
+   "check_level": "Business-rule",
+   "ownership": "owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "inactive"
+     }
+    },
+    "ownership": "owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:inactive-admin",
+   "check_level": "Business-rule",
+   "ownership": "non-owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "inactive"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:inactive-anon",
+   "check_level": "Business-rule",
+   "ownership": "non-owner",
+   "expected_status": "404",
+   "response_assertions": "",
+   "expected_source": "Requirement",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Unclear",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "inactive"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:pending-owner",
+   "check_level": "Business-rule",
+   "ownership": "owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "Existing test",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "pending_approval"
+     }
+    },
+    "ownership": "owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:pending-admin",
+   "check_level": "Business-rule",
+   "ownership": "non-owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "Existing test",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "pending_approval"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:pending-anon",
+   "check_level": "Business-rule",
+   "ownership": "non-owner",
+   "expected_status": "404",
+   "response_assertions": "",
+   "expected_source": "Existing test",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "pending_approval"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:public-states-user",
+   "check_level": "Business-rule",
+   "ownership": "owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": [
+       "active",
+       "approved",
+       "sold"
+      ]
+     }
+    },
+    "ownership": "owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:public-states-admin",
+   "check_level": "Business-rule",
+   "ownership": "non-owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": [
+       "active",
+       "approved",
+       "sold"
+      ]
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:public-states-anon",
+   "check_level": "Business-rule",
+   "ownership": "non-owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": [
+       "active",
+       "approved",
+       "sold"
+      ]
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:rejected-hidden",
+   "check_level": "Business-rule",
+   "ownership": "non-owner",
+   "expected_status": "404",
+   "response_assertions": "",
+   "expected_source": "Requirement",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Conflict",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "rejected"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:soft-deleted-hidden",
+   "check_level": "Business-rule",
+   "ownership": "non-owner",
+   "expected_status": "404",
+   "response_assertions": "",
+   "expected_source": "Requirement",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "soft_deleted"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "SPEC:404-documented",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "404",
+   "response_assertions": "spec documents a 404 response",
+   "expected_source": "OpenAPI spec",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "any",
+    "assertions": [
+     {
+      "type": "spec_declares",
+      "status": 404,
+      "what": "response"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "SPEC:200-schema",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "200",
+   "response_assertions": "spec declares a schema for the 200 response",
+   "expected_source": "OpenAPI spec",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "any",
+    "assertions": [
+     {
+      "type": "spec_declares",
+      "status": 200,
+      "what": "schema"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "SPEC:405-allow",
+   "check_level": "Contract",
+   "ownership": "n/a",
+   "expected_status": "405",
+   "response_assertions": "header Allow present",
+   "expected_source": "Documentation",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Confirmed",
+   "match": {
+    "method": "TRACE",
+    "path": "/listings/{id}",
+    "role": "any",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       405
+      ]
+     },
+     {
+      "type": "header",
+      "name": "allow",
+      "op": "present"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "CS:buyer-detail-guest",
+   "check_level": "Response-content",
+   "ownership": "non-owner",
+   "expected_status": "200",
+   "response_assertions": "body.id exists",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "id",
+      "op": "exists"
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "active"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "CS:buyer-detail-user",
+   "check_level": "Status-only",
+   "ownership": "n/a",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "active"
+     }
+    }
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "CS:seller-own-draft-token",
+   "check_level": "Status-only",
+   "ownership": "owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "draft"
+     }
+    },
+    "ownership": "owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "CS:seller-own-inactive-pending",
+   "check_level": "Status-only",
+   "ownership": "owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": [
+       "inactive",
+       "pending_approval"
+      ]
+     }
+    },
+    "ownership": "owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "CS:resume-draft-no-token",
+   "check_level": "Status-only",
+   "ownership": "non-owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "draft"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "CS:admin-detail-all-states",
+   "check_level": "Status-only",
+   "ownership": "non-owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": [
+       "active",
+       "approved",
+       "sold",
+       "inactive",
+       "pending_approval",
+       "draft"
+      ]
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "CS:admin-soft-deleted",
+   "check_level": "Status-only",
+   "ownership": "non-owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "Requirement",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Conflict",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "soft_deleted"
+     }
+    },
+    "ownership": "non_owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "CS:nonexistent-id-404",
+   "check_level": "Response-content",
+   "ownership": "n/a",
+   "expected_status": "404",
+   "response_assertions": "body.message == 'Listing not found'",
+   "expected_source": "Requirement",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "message",
+      "op": "equals",
+      "value": "Listing not found"
+     }
+    ],
+    "inputs": {
+     "id": {
+      "not_in_fixtures": true
+     }
+    }
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "COV:rejected-owner-view",
+   "check_level": "Status-only",
+   "ownership": "owner",
+   "expected_status": "200",
+   "response_assertions": "",
+   "expected_source": "QA suggestion",
+   "execution_method": "Schemathesis",
+   "requirement_status": "Assumed",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ],
+    "inputs": {
+     "id": {
+      "fixture_state": "rejected"
+     }
+    },
+    "ownership": "owner"
+   }
+  }
+ ]
+}

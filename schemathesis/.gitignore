@@ -1,0 +1,4 @@
+.env
+results/
+spec/openapi.json
+.hypothesis/

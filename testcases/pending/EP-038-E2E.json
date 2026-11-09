@@ -1,0 +1,55 @@
+{
+ "flows": [
+  {
+   "flow": "FLOW-03",
+   "flow_name": "Buyer browses a listing and opens product detail",
+   "ep": "EP-038",
+   "key": "EP-038",
+   "step": 1,
+   "endpoints": "EP-038",
+   "action": "GET /listings/{id} - product detail (ProductDetail.tsx:259,278); guest or logged-in",
+   "role": "anon",
+   "data": "fixtures active/approved/sold ids; optional Bearer token",
+   "expected": "200 listing body; pending_approval=404 for guest",
+   "linked_tcs": "TC-038-001, TC-038-002, TC-038-003, TC-038-004, TC-038-005, TC-038-006, TC-038-007, TC-038-008, TC-038-009, TC-038-010, TC-038-011, TC-038-012, TC-038-013, TC-038-014, TC-038-015, TC-038-016, TC-038-017, TC-038-018, TC-038-019, TC-038-020, TC-038-021, TC-038-022, TC-038-023, TC-038-024, TC-038-025, TC-038-037, TC-038-038, TC-038-039, TC-038-040, TC-038-041, TC-038-042, TC-038-043, TC-038-044, TC-038-045, TC-038-046, TC-038-047, TC-038-048, TC-038-049, TC-038-055, TC-038-056, TC-038-057, TC-038-058",
+   "automation": "Schemathesis",
+   "evidence": "schemathesis\\results\\2026-11-09_1115/1116/1118_EP-038_{user,admin,anon}",
+   "bug_id": "BUG-EP038-01, BUG-EP038-02, BUG-EP038-03, BUG-EP038-04",
+   "notes": "Mobile guest and user. App-read fields: negotiable, minOfferPercent, attributes, seller{}. Draft/inactive also open to guest (BUG-EP038-03). Reconciled against regenerated audit 2026-11-09: added TC-038-055..058 (reserved-state gap, offerCount-absent, foreign-type-id, unexpected query params)."
+  },
+  {
+   "flow": "FLOW-18",
+   "flow_name": "Seller manages own listings (create, edit, status, relist, delete)",
+   "ep": "EP-038",
+   "key": "EP-038",
+   "step": 4,
+   "endpoints": "EP-038",
+   "action": "GET /listings/{id} - open own listing / resume draft / edit price / status (SellerListingDetail.tsx:89, SellerEditPrice.tsx:61, SellerListingStatus.tsx:36, ResumeDraft.tsx:39 no token, web edit page.tsx:84)",
+   "role": "user",
+   "data": "owner token; draft, inactive, pending ids; ResumeDraft sends no token",
+   "expected": "200 for own listing in every state",
+   "linked_tcs": "TC-038-001, TC-038-002, TC-038-003, TC-038-004, TC-038-005, TC-038-006, TC-038-007, TC-038-008, TC-038-009, TC-038-010, TC-038-011, TC-038-012, TC-038-013, TC-038-014, TC-038-015, TC-038-016, TC-038-017, TC-038-018, TC-038-019, TC-038-020, TC-038-021, TC-038-022, TC-038-023, TC-038-024, TC-038-025, TC-038-037, TC-038-038, TC-038-039, TC-038-040, TC-038-041, TC-038-042, TC-038-043, TC-038-044, TC-038-045, TC-038-046, TC-038-047, TC-038-048, TC-038-049, TC-038-055, TC-038-056, TC-038-057, TC-038-058",
+   "automation": "Schemathesis",
+   "evidence": "schemathesis\\results\\2026-11-09_1115/1116/1118_EP-038_{user,admin,anon}",
+   "bug_id": "BUG-EP038-01, BUG-EP038-02, BUG-EP038-03, BUG-EP038-04",
+   "notes": "Owner role, OTP login. Soft-deleted would 404 even for owner (audit #2, not testable on QA). Reconciled against regenerated audit 2026-11-09: added TC-038-055..058 (reserved-state gap, offerCount-absent, foreign-type-id, unexpected query params)."
+  },
+  {
+   "flow": "FLOW-26",
+   "flow_name": "Admin reviews listings and moderates",
+   "ep": "EP-038",
+   "key": "EP-038",
+   "step": 2,
+   "endpoints": "EP-038",
+   "action": "GET /listings/{id} - admin listing detail (admin/listings/[id]/page.tsx:61, no /admin prefix)",
+   "role": "admin",
+   "data": "admin password login; all 6 state fixtures",
+   "expected": "200 for every state incl. pending_approval and draft",
+   "linked_tcs": "TC-038-001, TC-038-002, TC-038-003, TC-038-004, TC-038-005, TC-038-006, TC-038-007, TC-038-008, TC-038-009, TC-038-010, TC-038-011, TC-038-012, TC-038-013, TC-038-014, TC-038-015, TC-038-016, TC-038-017, TC-038-018, TC-038-019, TC-038-020, TC-038-021, TC-038-022, TC-038-023, TC-038-024, TC-038-025, TC-038-037, TC-038-038, TC-038-039, TC-038-040, TC-038-041, TC-038-042, TC-038-043, TC-038-044, TC-038-045, TC-038-046, TC-038-047, TC-038-048, TC-038-049, TC-038-055, TC-038-056, TC-038-057, TC-038-058",
+   "automation": "Schemathesis",
+   "evidence": "schemathesis\\results\\2026-11-09_1115/1116/1118_EP-038_{user,admin,anon}",
+   "bug_id": "BUG-EP038-01, BUG-EP038-02, BUG-EP038-03, BUG-EP038-04",
+   "notes": "Admin sees all states (matrix). Soft-deleted not testable. Reconciled against regenerated audit 2026-11-09: added TC-038-055..058 (reserved-state gap, offerCount-absent, foreign-type-id, unexpected query params)."
+  }
+ ]
+}

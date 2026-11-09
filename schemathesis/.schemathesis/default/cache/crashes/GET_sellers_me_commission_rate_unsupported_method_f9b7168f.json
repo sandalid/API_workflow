@@ -1,0 +1,78 @@
+{
+  "operation": "GET /sellers/me/commission-rate",
+  "method": "TRACE",
+  "path_template": "/sellers/me/commission-rate",
+  "fingerprint": "f9b7168f",
+  "case_id": "TkAqK6",
+  "code_sample": "curl -X TRACE https://api-qa.redspur.com/api/sellers/me/commission-rate",
+  "sequence": [
+    {
+      "method": "TRACE",
+      "url": "https://api-qa.redspur.com/api/sellers/me/commission-rate",
+      "url_template": "https://api-qa.redspur.com/api/sellers/me/commission-rate",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "TkAqK6",
+        "Content-Length": "0"
+      },
+      "response": {
+        "status_code": 405,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:59:17 GMT",
+          "content-type": "text/html",
+          "content-length": "166",
+          "connection": "close"
+        },
+        "body": "<html>\r\n<head><title>405 Not Allowed</title></head>\r\n<body>\r\n<center><h1>405 Not Allowed</h1></center>\r\n<hr><center>nginx/1.28.3 (Ubuntu)</center>\r\n</body>\r\n</html>\r\n"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "unsupported_method",
+          "status": "failure",
+          "message": "Wrong response to undeclared method\n\nTRACE returned 405 without required `Allow` header\n\nAdd `Allow` header listing supported methods (required by RFC 9110)"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 6.799993570894003e-06,
+          "mode": "negative"
+        },
+        "components": {},
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Unspecified HTTP method: TRACE",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "scenario": "unspecified_http_method"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/sellers/me/commission-rate",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /sellers/me/commission-rate"
+    }
+  ]
+}

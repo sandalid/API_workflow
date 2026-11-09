@@ -1,0 +1,46 @@
+{
+ "flows": [
+  {
+   "flow": 1,
+   "ep": "EP-033",
+   "key": "EP-033",
+   "endpoints": "EP-033",
+   "action": "GET /categories - fetch the flat category list (category/brands browse screen)",
+   "role": "user",
+   "linked_tcs": "TC-033-001, TC-033-002, TC-033-003, TC-033-004, TC-033-005, TC-033-006, TC-033-007, TC-033-008",
+   "automation": "Schemathesis",
+   "result": "FAIL",
+   "evidence": "schemathesis\\results\\2026-11-09_1241_EP-033_user",
+   "bug_id": "BUG-EP033-01, BUG-EP033-02",
+   "notes": "Step order not set; flow name TBD. Only role=user run exists; endpoint has no auth guard (see categories.controller.ts / categories.module.ts / app.module.ts:104) so anon/admin behavior is expected to match but was not independently re-run."
+  },
+  {
+   "flow": 2,
+   "ep": "EP-033",
+   "key": "EP-033",
+   "endpoints": "EP-033",
+   "action": "GET /categories - fetch the flat category list (category/brands browse screen)",
+   "role": "user",
+   "linked_tcs": "TC-033-001, TC-033-002, TC-033-003, TC-033-004, TC-033-005, TC-033-006, TC-033-007, TC-033-008",
+   "automation": "Schemathesis",
+   "result": "FAIL",
+   "evidence": "schemathesis\\results\\2026-11-09_1241_EP-033_user",
+   "bug_id": "BUG-EP033-01, BUG-EP033-02",
+   "notes": "Step order not set; flow name TBD. Only role=user run exists; endpoint has no auth guard so anon/admin behavior is expected to match but was not independently re-run."
+  },
+  {
+   "flow": 6,
+   "ep": "EP-033",
+   "key": "EP-033",
+   "endpoints": "EP-033",
+   "action": "GET /categories - fetch the flat category list (category/brands browse screen)",
+   "role": "user",
+   "linked_tcs": "TC-033-001, TC-033-002, TC-033-003, TC-033-004, TC-033-005, TC-033-006, TC-033-007, TC-033-008",
+   "automation": "Schemathesis",
+   "result": "FAIL",
+   "evidence": "schemathesis\\results\\2026-11-09_1241_EP-033_user",
+   "bug_id": "BUG-EP033-01, BUG-EP033-02",
+   "notes": "Step order not set; flow name TBD. Only role=user run exists; endpoint has no auth guard so anon/admin behavior is expected to match but was not independently re-run."
+  }
+ ]
+}

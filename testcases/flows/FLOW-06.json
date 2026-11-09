@@ -1,0 +1,22 @@
+{
+ "flow_id": "FLOW-06",
+ "name": "Signup/OTP auth then onboarding brand & category preferences",
+ "steps": [
+  {
+   "flow_name": "Signup/OTP auth then onboarding brand & category preferences",
+   "ep": "EP-032",
+   "key": "EP-032",
+   "step": 5,
+   "endpoints": "EP-032",
+   "action": "GET /brands - onboarding 'brands you love' step (any newly authenticated account)",
+   "role": "user",
+   "data": "Valid session token from the preceding OTP-verify step (EP-025)",
+   "expected": "200, array of brands for the user to pick preferences from; identical to anonymous response (no role-based filtering)",
+   "linked_tcs": "TC-032-002, TC-032-009, TC-032-010, TC-032-011, TC-032-016, TC-032-017",
+   "automation": "Schemathesis",
+   "notes": "Step order inferred: EP-018 check-availability (1) -> EP-024 otp/request (2) -> EP-025 otp/verify (3) -> EP-033 categories preference (4, no step number set in workbook) -> EP-032 brands preference (5). Call site: screens/auth/setup/Brands.tsx:41-42. Prior placeholder/EP-033 rows in this flow left untouched.",
+   "result": "NOT RUN"
+  }
+ ],
+ "updated": "2026-11-09"
+}

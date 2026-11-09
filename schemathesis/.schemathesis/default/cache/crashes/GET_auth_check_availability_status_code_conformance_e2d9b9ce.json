@@ -1,0 +1,92 @@
+{
+  "operation": "GET /auth/check-availability",
+  "method": "GET",
+  "path_template": "/auth/check-availability",
+  "fingerprint": "e2d9b9ce",
+  "case_id": "Druz4W",
+  "code_sample": "curl -X GET 'https://api-qa.redspur.com/api/auth/check-availability?field=email'",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/auth/check-availability?field=email",
+      "url_template": "https://api-qa.redspur.com/api/auth/check-availability",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "Druz4W"
+      },
+      "response": {
+        "status_code": 400,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:58:43 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "107",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "10",
+          "x-ratelimit-remaining": "9",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"6b-TGksGmGfDdCW1nf2hhUVWqIy+EU\""
+        },
+        "body": "{\"success\":false,\"statusCode\":400,\"message\":\"value must be a string\",\"error\":\"Bad Request\",\"field\":\"value\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 400\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 1.599994720891118e-05,
+          "mode": "negative"
+        },
+        "components": {
+          "QUERY": "negative"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Missing `value` at query",
+            "location": null,
+            "parameter": "value",
+            "parameter_location": "QUERY",
+            "scenario": "missing_parameter"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "QUERY": {
+            "field": "email"
+          }
+        }
+      },
+      "path": "/auth/check-availability",
+      "path_parameters": {},
+      "query": {
+        "field": "email"
+      },
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /auth/check-availability"
+    }
+  ]
+}

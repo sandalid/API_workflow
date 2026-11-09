@@ -1,0 +1,98 @@
+{
+  "operation": "DELETE /listings/{id}",
+  "method": "DELETE",
+  "path_template": "/listings/{id}",
+  "fingerprint": "a1363982",
+  "case_id": "ysiAAy",
+  "code_sample": "curl -X DELETE https://api-qa.redspur.com/api/listings/0",
+  "sequence": [
+    {
+      "method": "DELETE",
+      "url": "https://api-qa.redspur.com/api/listings/0",
+      "url_template": "https://api-qa.redspur.com/api/listings/{id}",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "ysiAAy",
+        "Content-Length": "0"
+      },
+      "response": {
+        "status_code": 401,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:59:37 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "59",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"3b-M+i3T6dfWiQASdRhxO6RsfD2hsM\""
+        },
+        "body": "{\"success\":false,\"statusCode\":401,\"message\":\"Unauthorized\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 401\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 0.00026970001636072993,
+          "mode": "positive"
+        },
+        "components": {
+          "PATH": "positive"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Default positive test case",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "scenario": "default_positive_test"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [
+          [
+            "path",
+            "id"
+          ]
+        ],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "PATH": {
+            "id": "0"
+          }
+        }
+      },
+      "path": "/listings/{id}",
+      "path_parameters": {
+        "id": "0"
+      },
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "DELETE /listings/{id}"
+    }
+  ]
+}

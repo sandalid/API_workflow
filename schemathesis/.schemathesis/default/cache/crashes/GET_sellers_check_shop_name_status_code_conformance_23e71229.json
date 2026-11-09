@@ -1,0 +1,88 @@
+{
+  "operation": "GET /sellers/check-shop-name",
+  "method": "GET",
+  "path_template": "/sellers/check-shop-name",
+  "fingerprint": "23e71229",
+  "case_id": "pAXHpS",
+  "code_sample": "curl -X GET https://api-qa.redspur.com/api/sellers/check-shop-name",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/sellers/check-shop-name",
+      "url_template": "https://api-qa.redspur.com/api/sellers/check-shop-name",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "pAXHpS"
+      },
+      "response": {
+        "status_code": 400,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:59:15 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "108",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"6c-L7i6EjaRJrmEERESUCctV6VIKg4\""
+        },
+        "body": "{\"success\":false,\"statusCode\":400,\"message\":\"name should not be empty\",\"error\":\"Bad Request\",\"field\":\"name\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 400\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 2.0200037397444248e-05,
+          "mode": "negative"
+        },
+        "components": {
+          "QUERY": "negative"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Missing `name` at query",
+            "location": null,
+            "parameter": "name",
+            "parameter_location": "QUERY",
+            "scenario": "missing_parameter"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "QUERY": {}
+        }
+      },
+      "path": "/sellers/check-shop-name",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /sellers/check-shop-name"
+    }
+  ]
+}

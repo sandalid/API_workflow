@@ -1,0 +1,78 @@
+{
+  "operation": "GET /admin/taxonomy/categories",
+  "method": "TRACE",
+  "path_template": "/admin/taxonomy/categories",
+  "fingerprint": "4b380a40",
+  "case_id": "aI7bys",
+  "code_sample": "curl -X TRACE https://api-qa.redspur.com/api/admin/taxonomy/categories",
+  "sequence": [
+    {
+      "method": "TRACE",
+      "url": "https://api-qa.redspur.com/api/admin/taxonomy/categories",
+      "url_template": "https://api-qa.redspur.com/api/admin/taxonomy/categories",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "aI7bys",
+        "Content-Length": "0"
+      },
+      "response": {
+        "status_code": 405,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:58:39 GMT",
+          "content-type": "text/html",
+          "content-length": "166",
+          "connection": "close"
+        },
+        "body": "<html>\r\n<head><title>405 Not Allowed</title></head>\r\n<body>\r\n<center><h1>405 Not Allowed</h1></center>\r\n<hr><center>nginx/1.28.3 (Ubuntu)</center>\r\n</body>\r\n</html>\r\n"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "unsupported_method",
+          "status": "failure",
+          "message": "Wrong response to undeclared method\n\nTRACE returned 405 without required `Allow` header\n\nAdd `Allow` header listing supported methods (required by RFC 9110)"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 7.599999662488699e-06,
+          "mode": "negative"
+        },
+        "components": {},
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Unspecified HTTP method: TRACE",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "scenario": "unspecified_http_method"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/admin/taxonomy/categories",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /admin/taxonomy/categories"
+    }
+  ]
+}

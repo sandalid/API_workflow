@@ -1,0 +1,517 @@
+{
+ "cases": [
+  {
+   "ep": "EP-032",
+   "key": "ST:anon-200",
+   "scenario": "Anonymous GET /brands (no Authorization header) returns 200 with an array of brands",
+   "test_type": "Functional",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "No fixtures needed (zero params). No Authorization header sent.",
+   "test_data": "n/a",
+   "steps": "GET /brands (no Authorization header)",
+   "expected_status": "200",
+   "expected": "200 OK, array body, no auth error",
+   "expected_source": "OpenAPI spec",
+   "requirement_status": "Confirmed",
+   "execution_method": "Schemathesis",
+   "source": "audit EP-032 suggested scenario #1; openapi.json (no security scheme on this op); brands.controller.ts:6-14 (no guard)",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "response_time",
+      "max_seconds": 2
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "BR:identical-response:user",
+   "scenario": "Logged-in buyer token gets 200 with the full brand catalog, same shape as anonymous - no role-based filtering/guard exists",
+   "test_type": "Business Rule",
+   "role": "user",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "Valid buyer JWT",
+   "test_data": "n/a",
+   "steps": "GET /brands with Authorization: Bearer <buyer token>",
+   "expected_status": "200",
+   "response_assertions": "body is a non-empty array; items[0] has id, name, itemCount",
+   "business_outcome": "BrandsController has no @UseGuards/role decorator - an authenticated buyer receives the identical, unfiltered catalog an anonymous caller would",
+   "expected": "200, array, identical shape/content to the anonymous call",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit EP-032 suggested scenario #2; brands.controller.ts:6-14 (no @UseGuards/role decorator)",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "user",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "[0].itemCount",
+      "op": "exists"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "BR:identical-response:other",
+   "scenario": "Logged-in seller token gets 200 with the full brand catalog, same shape as anonymous - no role-based filtering/guard exists",
+   "test_type": "Business Rule",
+   "role": "other",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "Valid seller JWT",
+   "test_data": "n/a",
+   "steps": "GET /brands with Authorization: Bearer <seller token>",
+   "expected_status": "200",
+   "response_assertions": "body is a non-empty array; items[0] has id, name, itemCount",
+   "business_outcome": "BrandsController has no @UseGuards/role decorator - an authenticated seller receives the identical, unfiltered catalog an anonymous caller would",
+   "expected": "200, array, identical shape/content to the anonymous call",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit EP-032 suggested scenario #2; brands.controller.ts:6-14 (no @UseGuards/role decorator)",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "other",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "[0].itemCount",
+      "op": "exists"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "BR:identical-response:admin",
+   "scenario": "Logged-in admin token gets 200 with the full brand catalog, same shape as anonymous - no role-based filtering/guard exists",
+   "test_type": "Business Rule",
+   "role": "admin",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "Valid admin JWT",
+   "test_data": "n/a",
+   "steps": "GET /brands with Authorization: Bearer <admin token>",
+   "expected_status": "200",
+   "response_assertions": "body is a non-empty array; items[0] has id, name, itemCount",
+   "business_outcome": "BrandsController has no @UseGuards/role decorator - an authenticated admin receives the identical, unfiltered catalog an anonymous caller would (this endpoint is not the admin taxonomy endpoint)",
+   "expected": "200, array, identical shape/content to the anonymous call",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit EP-032 suggested scenario #2; brands.controller.ts:6-14 (no @UseGuards/role decorator)",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "admin",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "[0].itemCount",
+      "op": "exists"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "BR:itemcount-live-only",
+   "scenario": "itemCount on a brand equals only its approved/active, non-deleted, non-mid-deletion-seller listings (LIVE_LISTING_WHERE)",
+   "test_type": "Business Rule",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "Needs a brand fixture whose listings span draft/sold/soft-deleted/active states (and ideally one from a seller mid-account-deletion) - none exists in fixtures.json today",
+   "test_data": "No brand fixture currently defined in fixtures.json (no brand ids/states recorded at all)",
+   "steps": "GET /brands; compare returned itemCount for the mixed-state brand against the count of only its approved/active listings",
+   "expected_status": "200",
+   "response_assertions": "itemCount for the mixed-state brand == count(listings where status in (approved,active) AND not soft-deleted AND seller.deletionScheduledFor is null)",
+   "business_outcome": "itemCount must exclude draft/pending_approval/rejected/inactive/soft-deleted/mid-deletion-seller listings, per LIVE_LISTING_WHERE",
+   "expected": "itemCount reflects only live listings, per brands.repository.ts:12-23 + listing.constants.ts:68-92",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "blocked_reason": "No brand fixture exists with listings in mixed states (draft/sold/soft-deleted/active) to verify itemCount exclusion; fixtures.json has no brand entries at all",
+   "execution_method": "Manual",
+   "source": "audit EP-032 suggested scenario #3; brands.repository.ts:12-23; listing.constants.ts:68-92 (LIVE_LISTING_WHERE)"
+  },
+  {
+   "ep": "EP-032",
+   "key": "FN:itemcount-zero-brand",
+   "scenario": "A brand with zero live listings still appears in the list with itemCount: 0 (not filtered out)",
+   "test_type": "Functional",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Response-content",
+   "preconditions": "Needs a brand fixture whose only listings are draft/sold (i.e. zero live listings) - none exists in fixtures.json today",
+   "test_data": "No zero-live-listing brand fixture currently recorded in fixtures.json",
+   "steps": "GET /brands; locate the zero-live-listing brand in the returned array",
+   "expected_status": "200",
+   "response_assertions": "the brand is present in the array; its itemCount == 0",
+   "business_outcome": "Brands are never filtered out for having no live listings - the repository query has no `where` excluding zero-count brands",
+   "expected": "Brand present with itemCount: 0, consistent with mobile test fixture brandsApi.test.ts:15",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "blocked_reason": "No brand fixture with itemCount=0 (zero live listings) is recorded in fixtures.json to locate/verify on QA",
+   "execution_method": "Manual",
+   "source": "audit EP-032 suggested scenario #4; brands.repository.ts:12-23; apps/mobile/src/services/__tests__/brandsApi.test.ts:15"
+  },
+  {
+   "ep": "EP-032",
+   "key": "BR:ordering-conflict",
+   "scenario": "Response ordering: does GET /brands return the admin-curated/insertion order the app/doc assume, or the alphabetical order the code produces?",
+   "test_type": "Business Rule",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "CF-032-01 open: app code comments (Explore.tsx:52-55, BrandListing.tsx:26-29) and docs/features/brand-drill-down.md:16 assume an admin-curated/insertion order; code sorts alphabetically (brands.repository.ts:14, orderBy:{name:'asc'}); Brand model has no sortOrder/order column at all (schema.prisma:514-524, CF-032-02) to back the doc's premise",
+   "test_data": "Needs >=7 brand fixtures with a deliberate insertion order different from alphabetical to distinguish the two hypotheses - none recorded in fixtures.json",
+   "steps": "GET /brands; record the actual order of returned brand names/ids",
+   "expected_status": "200",
+   "expected": "Unclear/Conflict - do not assert a specific order as pass/fail until product/dev clarify which order is actually required",
+   "expected_source": "Documentation",
+   "requirement_status": "Conflict",
+   "blocked_reason": "CF-032-01/CF-032-02: requirement (doc/app assumption of admin-curated order) conflicts with code (alphabetical, no order column exists at all) - needs product/dev clarification before an expected order can be asserted",
+   "execution_method": "Manual",
+   "source": "audit EP-032 suggested scenario #5; Source agreement matrix row 'Response ordering'"
+  },
+  {
+   "ep": "EP-032",
+   "key": "BR:explore-taster-conflict",
+   "scenario": "Guest Explore 'Shop by brand' taster rail (first 6 brands, TAXONOMY_RAIL_LIMIT) is meant per doc to show admin-curated brands, but will always show the first 6 alphabetically in practice",
+   "test_type": "Business Rule",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "CF-032-01 open (same root cause as BR:ordering-conflict)",
+   "test_data": "Needs >6 brand fixtures seeded to exercise the TAXONOMY_RAIL_LIMIT=6 slice - none recorded in fixtures.json",
+   "steps": "Open guest Explore screen with >6 brands seeded; observe which 6 brands the taster rail shows",
+   "expected_status": "n/a (UI)",
+   "expected": "Unclear/Conflict - document actual (first 6 alphabetically) vs intended (admin-curated) behaviour; do not assert a specific set as pass without product clarification",
+   "expected_source": "Documentation",
+   "requirement_status": "Conflict",
+   "blocked_reason": "CF-032-01: same ordering conflict as BR:ordering-conflict, surfaced in the guest Explore UI; also needs >6 brands seeded (screens/guest/Explore.tsx:101,52-55)",
+   "execution_method": "Playwright",
+   "source": "audit EP-032 suggested scenario #11; screens/guest/Explore.tsx:52-55,101"
+  },
+  {
+   "ep": "EP-032",
+   "key": "NEG:no-subresource-route",
+   "scenario": "GET /brands/{anyId} does not exist as a route (mobile client's getBrandById is a client-side filter, not a real backend call)",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "No sub-resource route is declared in openapi.json or brands.controller.ts (only findAll() is routed)",
+   "test_data": "any literal id, e.g. 'cm0000000000000000000000'",
+   "steps": "GET /brands/cm0000000000000000000000",
+   "expected_status": "404",
+   "expected": "404 (unmatched route) - confirms no /brands/:id endpoint exists server-side",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Postman",
+   "source": "audit EP-032 suggested scenario #6; brands.controller.ts:6-14 (only findAll() routed); apps/mobile/src/services/brandsApi.ts:19-21 (code comment)"
+  },
+  {
+   "ep": "EP-032",
+   "key": "FN:all-fields-present",
+   "scenario": "Raw HTTP response includes all 7 Brand fields (id, name, slug, logo, navigationTab, createdAt, itemCount), including the 4 the mobile app never reads",
+   "test_type": "Functional",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Response-content",
+   "preconditions": "No fixtures needed",
+   "test_data": "n/a",
+   "steps": "GET /brands (no Authorization header)",
+   "expected_status": "200",
+   "response_assertions": "items[0] has id, name, slug, logo, navigationTab, createdAt, itemCount all present (slug/logo/navigationTab/createdAt are dropped or never typed by the mobile client but ARE returned over the wire)",
+   "business_outcome": "The API returns the full Brand row regardless of what the mobile client currently consumes - relevant for any other/future API consumer",
+   "expected": "200; all 7 fields present in the raw body",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit EP-032 suggested scenario #7; brands.repository.ts:22 (...brand spread); brandsApi.ts:4-15 (slug/logo dropped); types/domain.ts:26-30 (navigationTab/createdAt never typed)",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "[0].id",
+      "op": "exists"
+     },
+     {
+      "type": "body_json",
+      "path": "[0].name",
+      "op": "exists"
+     },
+     {
+      "type": "body_json",
+      "path": "[0].slug",
+      "op": "exists"
+     },
+     {
+      "type": "body_json",
+      "path": "[0].logo",
+      "op": "exists"
+     },
+     {
+      "type": "body_json",
+      "path": "[0].navigationTab",
+      "op": "exists"
+     },
+     {
+      "type": "body_json",
+      "path": "[0].createdAt",
+      "op": "exists"
+     },
+     {
+      "type": "body_json",
+      "path": "[0].itemCount",
+      "op": "exists"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "ST:schema-conformance:anon",
+   "scenario": "200 body conforms to a documented response schema",
+   "test_type": "Schema/Contract",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Contract",
+   "preconditions": "openapi.json declares no schema at all for GET /brands 200 (\"200\":{\"description\":\"\"})",
+   "test_data": "n/a",
+   "steps": "GET /brands; response_schema_conformance check",
+   "expected_status": "200",
+   "response_assertions": "body conforms to the documented response schema",
+   "expected": "200 body validated against a documented schema",
+   "expected_source": "OpenAPI spec",
+   "requirement_status": "Assumed",
+   "blocked_reason": "spec has no response schema for GET /brands -> 200; response_schema_conformance would pass only vacuously",
+   "execution_method": "Schemathesis",
+   "source": "audit EP-032 suggested scenario #7 / Declared Contract section; openapi.json path /brands get 200",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "check",
+      "name": "response_schema_conformance"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "NEG:rate-limit-429",
+   "scenario": "Exceeding 100 req/min from one IP returns 429 (global ThrottlerGuard)",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "Global ThrottlerGuard, 100 req/min/IP, no per-route override for /brands (app.module.ts:59,104)",
+   "test_data": "n/a",
+   "steps": "Scripted burst of >100 GET /brands requests within 60s from one IP",
+   "expected_status": "429",
+   "expected": "429 with a standard Nest throttler error body once the limit is exceeded",
+   "expected_source": "Backend code",
+   "requirement_status": "Confirmed",
+   "execution_method": "Postman",
+   "source": "audit EP-032 suggested scenario #8; app.module.ts:59,104 (ThrottlerGuard)"
+  },
+  {
+   "ep": "EP-032",
+   "key": "NEG:unexpected-query-params",
+   "scenario": "Unexpected query params (?foo=bar, ?navigationTab=true) on a zero-param endpoint are silently ignored",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "No params declared at all for this op (openapi.json parameters:[])",
+   "test_data": "n/a",
+   "steps": "GET /brands?foo=bar&navigationTab=true",
+   "expected_status": "200",
+   "expected": "200, unknown query params ignored, no 400 and no behaviour change",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Postman",
+   "source": "audit EP-032 suggested scenario #9"
+  },
+  {
+   "ep": "EP-032",
+   "key": "SEC:injection-query-junk",
+   "scenario": "Malformed/injection-style junk on an endpoint with no query params does not error or leak data",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Security",
+   "preconditions": "No params declared at all for this op",
+   "test_data": "e.g. ?id=' OR 1=1--",
+   "steps": "GET /brands?id=%27%20OR%201%3D1--",
+   "expected_status": "200",
+   "response_assertions": "array unchanged (same content as a plain GET /brands call); no 5xx; no error body",
+   "expected": "200, unaffected; confirms no data leak or crash from injection-shaped junk query strings",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Postman",
+   "source": "audit EP-032 suggested scenario #10"
+  },
+  {
+   "ep": "EP-032",
+   "key": "SEC:malformed-token",
+   "scenario": "Malformed/garbage Authorization header does not cause a 401/500 - no guard parses it on this route",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Security",
+   "preconditions": "BrandsController has no @UseGuards at all - no guard is present to parse/reject a bad token on this route",
+   "test_data": "Authorization: Bearer not-a-real-jwt",
+   "steps": "GET /brands with Authorization: Bearer not-a-real-jwt",
+   "expected_status": "200",
+   "expected": "200 unaffected - a garbage Authorization header is simply never read on this unguarded route",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit EP-032 Test design inputs (a); brands.controller.ts:6-14 (no @UseGuards, no role decorator)",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "ST:unsupported_method:anon",
+   "scenario": "Unsupported method (TRACE) returns 405 with an Allow header",
+   "test_type": "Schemathesis",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Contract",
+   "preconditions": "No fixtures needed (zero params)",
+   "test_data": "n/a",
+   "steps": "TRACE /brands",
+   "expected_status": "405",
+   "response_assertions": "header Allow present",
+   "expected": "405 includes Allow header (RFC 9110)",
+   "expected_source": "Documentation",
+   "requirement_status": "Confirmed",
+   "execution_method": "Schemathesis",
+   "source": "COV: app-wide AllExceptionsFilter gap already seen on EP-038/EP-033 - checked here for completeness",
+   "match": {
+    "method": "TRACE",
+    "path": "/brands",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       405
+      ]
+     },
+     {
+      "type": "header",
+      "name": "allow",
+      "op": "present"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "ST:all-other:anon",
+   "scenario": "All other Schemathesis checks pass (no 5xx, timing, auth or negative-data failures)",
+   "test_type": "Schemathesis",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "No fixtures needed (zero params)",
+   "test_data": "n/a",
+   "steps": "Schemathesis examples + coverage phases against GET /brands",
+   "expected_status": "< 500",
+   "expected": "No 5xx, auth, timing, header or negative-data failures",
+   "business_outcome": "Scope of the automated verdict: no 5xx (status < 500) and acceptable response time on every call of this role. content_type/response_headers/response_schema_conformance checks pass only vacuously here (no 200 schema, see ST:schema-conformance:anon).",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "COV: generic Schemathesis sweep, mirrors EP-038/EP-033 pattern",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "anon",
+    "assertions": [
+     {
+      "type": "status",
+      "lt": 500
+     },
+     {
+      "type": "check",
+      "name": "not_a_server_error"
+     },
+     {
+      "type": "check",
+      "name": "max_response_time"
+     }
+    ]
+   }
+  }
+ ]
+}

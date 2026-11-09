@@ -1,0 +1,88 @@
+{
+  "operation": "GET /sellers/confirm/{token}",
+  "method": "GET",
+  "path_template": "/sellers/confirm/{token}",
+  "fingerprint": "0ed24933",
+  "case_id": "d6Ei0u",
+  "code_sample": "curl -X GET https://api-qa.redspur.com/api/sellers/confirm/0",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/sellers/confirm/0",
+      "url_template": "https://api-qa.redspur.com/api/sellers/confirm/{token}",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "d6Ei0u"
+      },
+      "response": {
+        "status_code": 400,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 05:00:12 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "105",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"69-GnBAU46K2Ecr2S7sYGs/KlxyfiU\""
+        },
+        "body": "{\"success\":false,\"statusCode\":400,\"message\":\"Invalid or expired confirmation link\",\"error\":\"Bad Request\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "positive_data_acceptance",
+          "status": "failure",
+          "message": "Schema-valid request rejected\n\nValid data should have been accepted\nExpected: 2xx, 3xx, 401, 403, 404, 409, 429, 5xx"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 0.0028861999744549394,
+          "mode": "positive"
+        },
+        "components": {
+          "PATH": "positive"
+        },
+        "phase": {
+          "name": "fuzzing",
+          "data": {
+            "type": "FuzzingPhaseData",
+            "description": "Positive test case",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "mutations": []
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/sellers/confirm/{token}",
+      "path_parameters": {
+        "token": "[Filtered]"
+      },
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /sellers/confirm/{token}"
+    }
+  ]
+}

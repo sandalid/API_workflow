@@ -1,0 +1,82 @@
+{
+  "operation": "GET /brands",
+  "method": "QUERY",
+  "path_template": "/brands",
+  "fingerprint": "a5de46af",
+  "case_id": "9jSfI4",
+  "code_sample": "curl -X QUERY https://api-qa.redspur.com/api/brands",
+  "sequence": [
+    {
+      "method": "QUERY",
+      "url": "https://api-qa.redspur.com/api/brands",
+      "url_template": "https://api-qa.redspur.com/api/brands",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "9jSfI4",
+        "Content-Length": "0"
+      },
+      "response": {
+        "status_code": 404,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 13:14:41 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "87",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "etag": "W/\"57-M6pdB54ZJ9XcWYiQrzOfovDVMn8\""
+        },
+        "body": "{\"success\":false,\"statusCode\":404,\"message\":\"Cannot QUERY /brands\",\"error\":\"Not Found\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "unsupported_method",
+          "status": "failure",
+          "message": "Wrong response to undeclared method\n\nUnsupported method QUERY returned 404, expected 405 Method Not Allowed\n\nReturn 405 for methods not listed in the OpenAPI spec"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 3.89997148886323e-06,
+          "mode": "negative"
+        },
+        "components": {},
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Unspecified HTTP method: QUERY",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "scenario": "unspecified_http_method"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/brands",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /brands"
+    }
+  ]
+}

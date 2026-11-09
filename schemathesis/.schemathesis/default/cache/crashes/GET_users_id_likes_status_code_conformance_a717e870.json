@@ -1,0 +1,105 @@
+{
+  "operation": "GET /users/{id}/likes",
+  "method": "GET",
+  "path_template": "/users/{id}/likes",
+  "fingerprint": "a717e870",
+  "case_id": "8ABscv",
+  "code_sample": "curl -X GET 'https://api-qa.redspur.com/api/users/0/likes?page=1&x-schemathesis-unknown-property=42'",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/users/0/likes?page=1&x-schemathesis-unknown-property=42",
+      "url_template": "https://api-qa.redspur.com/api/users/{id}/likes",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "8ABscv"
+      },
+      "response": {
+        "status_code": 401,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:59:35 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "59",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"3b-M+i3T6dfWiQASdRhxO6RsfD2hsM\""
+        },
+        "body": "{\"success\":false,\"statusCode\":401,\"message\":\"Unauthorized\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 401\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 9.359995601698756e-05,
+          "mode": "negative"
+        },
+        "components": {
+          "PATH": "positive",
+          "QUERY": "negative"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Object with unexpected properties",
+            "location": null,
+            "parameter": null,
+            "parameter_location": "QUERY",
+            "scenario": "object_unexpected_properties"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [
+          [
+            "path",
+            "id"
+          ]
+        ],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "PATH": {
+            "id": "0"
+          },
+          "QUERY": {
+            "page": 1,
+            "x-schemathesis-unknown-property": 42
+          }
+        }
+      },
+      "path": "/users/{id}/likes",
+      "path_parameters": {
+        "id": "0"
+      },
+      "query": {
+        "page": "1",
+        "x-schemathesis-unknown-property": "42"
+      },
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /users/{id}/likes"
+    }
+  ]
+}

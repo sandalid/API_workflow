@@ -1,0 +1,46 @@
+{
+ "flows": [
+  {
+   "flow": 3,
+   "ep": "EP-038",
+   "key": "EP-038",
+   "endpoints": "EP-038",
+   "action": "GET /listings/{id} - fetch one listing",
+   "role": "anon",
+   "linked_tcs": "TC-038-001, TC-038-002, TC-038-003, TC-038-004, TC-038-005, TC-038-006, TC-038-007, TC-038-008, TC-038-009, TC-038-010, TC-038-037, TC-038-038",
+   "automation": "Schemathesis",
+   "result": "FAIL",
+   "evidence": "schemathesis\results\u00826-11-09_1115/1116/1118_EP-038_*",
+   "bug_id": "BUG-EP038-03, BUG-EP038-04, BUG-EP038-01",
+   "notes": "Step order not set; flow name TBD. Linked cases = Schemathesis + business-rule cases."
+  },
+  {
+   "flow": 18,
+   "ep": "EP-038",
+   "key": "EP-038",
+   "endpoints": "EP-038",
+   "action": "GET /listings/{id} - fetch one listing",
+   "role": "user",
+   "linked_tcs": "TC-038-001, TC-038-002, TC-038-003, TC-038-004, TC-038-005, TC-038-006, TC-038-007, TC-038-008, TC-038-009, TC-038-010, TC-038-037, TC-038-038",
+   "automation": "Schemathesis",
+   "result": "FAIL",
+   "evidence": "schemathesis\results\u00826-11-09_1115/1116/1118_EP-038_*",
+   "bug_id": "BUG-EP038-03, BUG-EP038-04, BUG-EP038-01",
+   "notes": "Step order not set; flow name TBD. Linked cases = Schemathesis + business-rule cases."
+  },
+  {
+   "flow": 26,
+   "ep": "EP-038",
+   "key": "EP-038",
+   "endpoints": "EP-038",
+   "action": "GET /listings/{id} - fetch one listing",
+   "role": "admin",
+   "linked_tcs": "TC-038-001, TC-038-002, TC-038-003, TC-038-004, TC-038-005, TC-038-006, TC-038-007, TC-038-008, TC-038-009, TC-038-010, TC-038-037, TC-038-038",
+   "automation": "Schemathesis",
+   "result": "FAIL",
+   "evidence": "schemathesis\results\u00826-11-09_1115/1116/1118_EP-038_*",
+   "bug_id": "BUG-EP038-03, BUG-EP038-04, BUG-EP038-01",
+   "notes": "Step order not set; flow name TBD. Linked cases = Schemathesis + business-rule cases."
+  }
+ ]
+}

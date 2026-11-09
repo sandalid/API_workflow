@@ -1,0 +1,147 @@
+{
+  "operation": "GET /listings",
+  "method": "GET",
+  "path_template": "/listings",
+  "fingerprint": "5ca7754b",
+  "case_id": "jSivja",
+  "code_sample": "curl -X GET 'https://api-qa.redspur.com/api/listings?page=1&limit=20&brandId=&categoryId=&subcategoryId=&sellerId=&status=sold&sort=best&q=&condition=NWT&size=&material=&color=&era=&freeShipping=true&minPrice=0&maxPrice=0&attributes='",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/listings?page=1&limit=20&brandId=&categoryId=&subcategoryId=&sellerId=&status=sold&sort=best&q=&condition=NWT&size=&material=&color=&era=&freeShipping=true&minPrice=0&maxPrice=0&attributes=",
+      "url_template": "https://api-qa.redspur.com/api/listings",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "jSivja"
+      },
+      "response": {
+        "status_code": 400,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:58:51 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "143",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "99",
+          "x-ratelimit-reset": "60",
+          "etag": "W/\"8f-/OIJxFz9QVVrjmoD0bwfhFjNW0k\""
+        },
+        "body": "{\"success\":false,\"statusCode\":400,\"message\":\"categoryId is required when subcategoryId is provided\",\"error\":\"Bad Request\",\"field\":\"categoryId\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "positive_data_acceptance",
+          "status": "failure",
+          "message": "Schema-valid request rejected\n\nValid data should have been accepted\nExpected: 2xx, 3xx, 401, 403, 404, 409, 429, 5xx"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 1.839996548369527e-05,
+          "mode": "positive"
+        },
+        "components": {
+          "QUERY": "positive"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "All required and 18 optional properties",
+            "location": null,
+            "parameter": null,
+            "parameter_location": "QUERY",
+            "scenario": "object_required_and_optional"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [
+          [
+            "query",
+            "brandId"
+          ],
+          [
+            "query",
+            "categoryId"
+          ],
+          [
+            "query",
+            "subcategoryId"
+          ],
+          [
+            "query",
+            "sellerId"
+          ]
+        ],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "QUERY": {
+            "page": 1,
+            "limit": 20,
+            "brandId": "",
+            "categoryId": "",
+            "subcategoryId": "",
+            "sellerId": "",
+            "status": "sold",
+            "sort": "best",
+            "q": "",
+            "condition": "NWT",
+            "size": "",
+            "material": "",
+            "color": "",
+            "era": "",
+            "freeShipping": true,
+            "minPrice": 0,
+            "maxPrice": 0,
+            "attributes": [
+              ""
+            ]
+          }
+        }
+      },
+      "path": "/listings",
+      "path_parameters": {},
+      "query": {
+        "page": "1",
+        "limit": "20",
+        "brandId": "",
+        "categoryId": "",
+        "subcategoryId": "",
+        "sellerId": "",
+        "status": "sold",
+        "sort": "best",
+        "q": "",
+        "condition": "NWT",
+        "size": "",
+        "material": "",
+        "color": "",
+        "era": "",
+        "freeShipping": "true",
+        "minPrice": "0",
+        "maxPrice": "0",
+        "attributes": [
+          ""
+        ]
+      },
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /listings"
+    }
+  ]
+}

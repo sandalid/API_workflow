@@ -1,0 +1,78 @@
+{
+  "operation": "GET /brands",
+  "method": "TRACE",
+  "path_template": "/brands",
+  "fingerprint": "c95bb0f4",
+  "case_id": "MTJIBU",
+  "code_sample": "curl -X TRACE https://api-qa.redspur.com/api/brands",
+  "sequence": [
+    {
+      "method": "TRACE",
+      "url": "https://api-qa.redspur.com/api/brands",
+      "url_template": "https://api-qa.redspur.com/api/brands",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "MTJIBU",
+        "Content-Length": "0"
+      },
+      "response": {
+        "status_code": 405,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 13:14:40 GMT",
+          "content-type": "text/html",
+          "content-length": "166",
+          "connection": "close"
+        },
+        "body": "<html>\r\n<head><title>405 Not Allowed</title></head>\r\n<body>\r\n<center><h1>405 Not Allowed</h1></center>\r\n<hr><center>nginx/1.28.3 (Ubuntu)</center>\r\n</body>\r\n</html>\r\n"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "unsupported_method",
+          "status": "failure",
+          "message": "Wrong response to undeclared method\n\nTRACE returned 405 without required `Allow` header\n\nAdd `Allow` header listing supported methods (required by RFC 9110)"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 1.9000144675374031e-06,
+          "mode": "negative"
+        },
+        "components": {},
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Unspecified HTTP method: TRACE",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "scenario": "unspecified_http_method"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/brands",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /brands"
+    }
+  ]
+}

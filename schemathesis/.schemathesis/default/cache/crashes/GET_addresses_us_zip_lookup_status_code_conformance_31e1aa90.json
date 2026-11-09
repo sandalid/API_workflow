@@ -1,0 +1,88 @@
+{
+  "operation": "GET /addresses/us/zip-lookup",
+  "method": "GET",
+  "path_template": "/addresses/us/zip-lookup",
+  "fingerprint": "31e1aa90",
+  "case_id": "GKRKSM",
+  "code_sample": "curl -X GET https://api-qa.redspur.com/api/addresses/us/zip-lookup",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/addresses/us/zip-lookup",
+      "url_template": "https://api-qa.redspur.com/api/addresses/us/zip-lookup",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "GKRKSM"
+      },
+      "response": {
+        "status_code": 400,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 04:58:20 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "106",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "98",
+          "x-ratelimit-reset": "37",
+          "etag": "W/\"6a-QX5gr6F1AvFkye7Diq8IMKWc5YY\""
+        },
+        "body": "{\"success\":false,\"statusCode\":400,\"message\":\"zip should not be empty\",\"error\":\"Bad Request\",\"field\":\"zip\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 400\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 3.370002377778292e-05,
+          "mode": "negative"
+        },
+        "components": {
+          "QUERY": "negative"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Missing `zip` at query",
+            "location": null,
+            "parameter": "zip",
+            "parameter_location": "QUERY",
+            "scenario": "missing_parameter"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {
+          "QUERY": {}
+        }
+      },
+      "path": "/addresses/us/zip-lookup",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /addresses/us/zip-lookup"
+    }
+  ]
+}
