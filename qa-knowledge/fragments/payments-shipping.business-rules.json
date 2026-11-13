@@ -1,0 +1,236 @@
+{
+  "batch": "payments-shipping",
+  "rules": [
+    {
+      "id": "BR-PAYMENTS-001",
+      "module": "payments",
+      "rule": "POST /payments/webhook requires the raw (unparsed) request body and a valid stripe-signature header verified via stripe.webhooks.constructEvent against STRIPE_WEBHOOK_SECRET; an invalid/unverifiable signature returns 400 and is logged at warn.",
+      "evidence": ["apps/api/src/payments/payments.service.ts:727-736", "apps/api/src/payments/payments.controller.ts:17-25", "apps/api/src/main.ts:20"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENTS-002",
+      "module": "payments",
+      "rule": "Webhook deliveries are deduped by Stripe event id via an atomic upsert into WebhookEvent; a delivery already 'processed' is skipped without re-running business logic. A 'failed' or fresh 'received' row is NOT skipped — Stripe's own retry is expected to reach this path again.",
+      "evidence": ["apps/api/src/payments/webhook-events.repository.ts:24-30", "apps/api/src/payments/payments.service.ts:745-749"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENTS-003",
+      "module": "payments",
+      "rule": "Any thrown error from an event handler marks the WebhookEvent 'failed' and rethrows, reaching AllExceptionsFilter as a 500 — the intended signal for Stripe to retry.",
+      "evidence": ["apps/api/src/payments/payments.service.ts:816-823"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENTS-004",
+      "module": "payments",
+      "rule": "payment_intent.succeeded with no matching Order throws deliberately (treated as a timing race between Stripe's confirmation and the Order row becoming queryable) so Stripe retries until the Order exists.",
+      "evidence": ["apps/api/src/payments/payments.service.ts:845-864"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENTS-005",
+      "module": "payments",
+      "rule": "payment_intent.payment_failed / payment_intent.canceled with no matching Order is a silent no-op (warn + return, never throws) — this is the expected, permanent case for a declined/withdrawn/expired/superseded offer-hold PaymentIntent, which never had an Order.",
+      "evidence": ["apps/api/src/payments/payments.service.ts:1006-1021", "apps/api/src/payments/payments.service.ts:1055-1070"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENTS-006",
+      "module": "payments",
+      "rule": "A mismatch between the webhook's captured amount and Order.total is logged at error but does not block recording the payment as succeeded, since the charge already happened on Stripe's side.",
+      "evidence": ["apps/api/src/payments/payments.service.ts:866-875"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENTS-007",
+      "module": "payments",
+      "rule": "charge.refunded is a no-op if Payment.status is already 'refunded'; otherwise full-vs-partial is derived from the cumulative Charge.amount_refunded vs Payment.amount, and any tax-transaction reversal is sized to the increment over the previously-recorded cumulative total, not the running total itself.",
+      "evidence": ["apps/api/src/payments/payments.service.ts:1087-1133"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENTS-008",
+      "module": "payments",
+      "rule": "charge.dispute.* and transfer.* events are platform-account events dispatched into ConnectService rather than handled in this module; a missing ConnectService wiring logs at error (not silent) though the webhook delivery still resolves 200.",
+      "evidence": ["apps/api/src/payments/payments.service.ts:769-814", "apps/api/src/payments/payments.service.ts:834-843"],
+      "classification": "confirmed-by-code",
+      "note": "Dispute/chargeback business logic itself is owned by connect/orders-disputes modules — not re-derived here."
+    },
+    {
+      "id": "BR-PAYMENTS-009",
+      "module": "payments",
+      "rule": "refundOrderPayment only acts on a Payment in 'succeeded' or 'partially_refunded' status, caps the refund to the remaining unrefunded balance, and maps Stripe client-caused failures (e.g. already charged back) to 400 while rethrowing anything else as a genuine 500.",
+      "evidence": ["apps/api/src/payments/payments.service.ts:611-678"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENTS-010",
+      "module": "payments",
+      "rule": "Every retryable Stripe-side write in this module (customer/account creation, transfer, refund, tax transaction/reversal) carries an idempotencyKey scoped to the specific operation and order/event, so a network retry of the same call cannot duplicate its real-world effect.",
+      "evidence": ["apps/api/src/payments/payments.service.ts:95-111", "apps/api/src/payments/payments.service.ts:198-215", "apps/api/src/payments/payments.service.ts:611-678", "apps/api/src/payments/payments.service.ts:276-342"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENTS-011",
+      "module": "payments",
+      "rule": "A sibling raw-body route, /payments/webhook/connect, exists under ConnectModule and shares the same WebhookEvent dedup table — out of this module's 6-endpoint scope but relevant to understanding the full Stripe webhook surface.",
+      "evidence": ["apps/api/src/main.ts:25", "apps/api/src/payments/webhook-events.repository.ts:6-10"],
+      "classification": "confirmed-by-code",
+      "note": "Boundary note only — not analyzed further here."
+    },
+    {
+      "id": "BR-PAYMENT-METHODS-001",
+      "module": "payment-methods",
+      "rule": "All three endpoints (GET/POST/DELETE) require JwtAuthGuard at the controller class level — there are no public routes in this module.",
+      "evidence": ["apps/api/src/payment-methods/payment-methods.controller.ts:19-20"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENT-METHODS-002",
+      "module": "payment-methods",
+      "rule": "Attach is idempotent two ways: (a) the exact Stripe PaymentMethod id already saved for the user returns that row with alreadySaved:true and makes no Stripe call; (b) a different id but the same physical card (brand+last4+expMonth+expYear) already saved returns the existing row with alreadySaved:true and detaches the newly-created Stripe clone.",
+      "evidence": ["apps/api/src/payment-methods/payment-methods.service.ts:74-171"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENT-METHODS-003",
+      "module": "payment-methods",
+      "rule": "Only visa/mastercard/amex/discover may be saved; any other brand is attached (to learn its brand from Stripe), then detached again and rejected with 400.",
+      "evidence": ["apps/api/src/payment-methods/payment-methods.service.ts:135-145", "apps/api/src/common/constants/card-brands.constant.ts"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENT-METHODS-004",
+      "module": "payment-methods",
+      "rule": "A stale/cross-environment stripeCustomerId (Stripe 'resource_missing' with param 'customer') triggers exactly one auto-recreate-and-retry of the Stripe customer before failing.",
+      "evidence": ["apps/api/src/payment-methods/payment-methods.service.ts:98-120"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENT-METHODS-005",
+      "module": "payment-methods",
+      "rule": "Delete is ownership-checked (403 if not the caller's row) and blocked with 409 if the card currently backs an open (pending/countered, unexpired) offer hold, checked before any Stripe call.",
+      "evidence": ["apps/api/src/payment-methods/payment-methods.service.ts:173-189", "apps/api/src/offers/offers.repository.ts:198-213"],
+      "classification": "confirmed-by-code",
+      "linearRefs": ["BRI-816", "REDB1-54"]
+    },
+    {
+      "id": "BR-PAYMENT-METHODS-006",
+      "module": "payment-methods",
+      "rule": "Delete is a hard delete at both Stripe (tolerant of an already-detached PaymentMethod) and the local DB row — no soft delete. Orders/Offers never hold a live FK to PaymentMethod for history; they snapshot cardBrand/cardLast4 at creation time, so a later deletion never corrupts a past order/offer record.",
+      "evidence": ["apps/api/src/payment-methods/payment-methods.repository.ts:48-50", "apps/api/prisma/schema.prisma:1116-1124"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-PAYMENT-METHODS-007",
+      "module": "payment-methods",
+      "rule": "PaymentMethod.isDefault exists in the schema and response DTO and drives findAll's sort order, but no code path anywhere sets it to true — there is no set-default endpoint. In practice findAll is always sorted newest-first.",
+      "evidence": ["apps/api/prisma/schema.prisma:1044", "apps/api/src/payment-methods/payment-methods.repository.ts:9-13"],
+      "classification": "gap-confirmed-by-code",
+      "note": "Dead field, not a bug — nothing is broken, the sort key is simply a no-op in practice."
+    },
+    {
+      "id": "BR-PAYMENT-METHODS-008",
+      "module": "payment-methods",
+      "rule": "The idempotency checks in attach() (exact-id and same-card) are application-level findFirst reads with no backing DB unique constraint, so two concurrent identical POST requests can both pass the check and insert two rows. Confirmed as a live, currently-open issue — REDB1-39/BRI-434 — where this exact application-level fix is verified live yet duplicate rows pre-exist in the shared DB and were never cleaned up pending sign-off.",
+      "evidence": ["apps/api/src/payment-methods/payment-methods.repository.ts:18-31", "apps/api/prisma/schema.prisma:1036-1050"],
+      "classification": "gap-confirmed-by-linear",
+      "linearRefs": ["REDB1-39", "BRI-434"]
+    },
+    {
+      "id": "BR-PAYMENT-METHODS-009",
+      "module": "payment-methods",
+      "rule": "A PaymentMethod row detached from Stripe out-of-band (Dashboard or expiry) is never revalidated by this module — GET keeps listing it, attach/delete don't re-check it. The failure only surfaces downstream at checkout as a raw, uncaught Stripe error.",
+      "evidence": ["apps/api/src/payment-methods/payment-methods.repository.ts:9-14"],
+      "classification": "gap-confirmed-by-linear",
+      "linearRefs": ["REDB1-124", "BRI-823"],
+      "note": "Fix boundary is orders.service.ts, not this module — flagged here because the stale-row condition originates in this module's data."
+    },
+    {
+      "id": "BR-SHIPPING-001",
+      "module": "shipping",
+      "rule": "GET /shipping/tiers is public (no guard) by design, so mobile/web can show it before a user is confirmed as a seller.",
+      "evidence": ["apps/api/src/shipping/shipping.controller.ts:6-11"],
+      "classification": "confirmed-by-code",
+      "linearRefs": ["BRI-460"]
+    },
+    {
+      "id": "BR-SHIPPING-002",
+      "module": "shipping",
+      "rule": "The 4 shipping-fee tiers are hard-coded application constants, not DB-driven or admin-configurable. A prior ShippingConfig table/service existed and was deliberately removed.",
+      "evidence": ["apps/api/src/shipping/shipping.constants.ts:53-93", "apps/api/src/shipping/shipping.module.ts:26-30"],
+      "classification": "confirmed-by-code",
+      "linearRefs": ["BRI-477", "BRI-604"]
+    },
+    {
+      "id": "BR-SHIPPING-003",
+      "module": "shipping",
+      "rule": "Tier prices/weight bands are the single source of truth also consumed by ai/shippability.ts's weight-to-tier suggestion logic and by mobile+web frontends — must not be independently re-declared anywhere.",
+      "evidence": ["apps/api/src/shipping/shipping.constants.ts:1-10"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-SHIPPING-004",
+      "module": "shipping",
+      "rule": "POST /shipping/webhook/shippo is a pure no-op unless SHIPPO_TRACKING_MODE=webhook is explicitly configured; polling is the documented production default/authoritative tracking source, and this route does not perform signature verification at all when tracking mode is not 'webhook'.",
+      "evidence": ["apps/api/src/shipping/shippo-webhook.service.ts:80-98"],
+      "classification": "confirmed-by-code",
+      "linearRefs": ["BRI-414"]
+    },
+    {
+      "id": "BR-SHIPPING-005",
+      "module": "shipping",
+      "rule": "When webhook mode is active, HMAC (header shippo-auth-signature, t=/v1= format, SHA-256 over '<timestamp>.<rawBody>', constant-time compare) takes precedence over a URL ?token= shared secret; at least one must be configured or boot fails.",
+      "evidence": ["apps/api/src/shipping/shippo-webhook.service.ts:153-198", "apps/api/src/common/config/env.validation.ts:38-41"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-SHIPPING-006",
+      "module": "shipping",
+      "rule": "If neither HMAC secret nor URL token is configured, the handler falls open (warns, accepts unauthenticated) rather than rejecting — reachable in practice only by a local dev boot that bypasses env validation, since normal boot refuses to start in that combination.",
+      "evidence": ["apps/api/src/shipping/shippo-webhook.service.ts:166-171"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-SHIPPING-007",
+      "module": "shipping",
+      "rule": "The webhook resolves 200 for every safe-to-ignore case (tracking mode off, non-track_updated event, unknown carrier+tracking pair) so Shippo stops retrying those; it throws 400/401 for a payload/auth problem Shippo should not retry, and lets a genuine unexpected error propagate to a 500 that Shippo WILL retry.",
+      "evidence": ["apps/api/src/shipping/shippo-webhook.service.ts:70-79"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-SHIPPING-008",
+      "module": "shipping",
+      "rule": "(carrier, trackingNumber) has no DB-level uniqueness on Shipment; a webhook matching more than one row resolves to the most-recently-created one, logged at error for manual investigation rather than failing the request.",
+      "evidence": ["apps/api/src/shipping/shipments.repository.ts:44-72"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-SHIPPING-009",
+      "module": "shipping",
+      "rule": "Inbound webhook field names are read defensively in both snake_case and camelCase because the exact wire payload shape has never been confirmed against a real Shippo delivery (only documented, per the BRI-257 POC's own finding that it never received one).",
+      "evidence": ["apps/api/src/shipping/shippo-webhook.service.ts:28-58"],
+      "classification": "gap-confirmed-by-code",
+      "linearRefs": ["BRI-257"]
+    },
+    {
+      "id": "BR-SHIPPING-010",
+      "module": "shipping",
+      "rule": "A valid, resolvable tracking update emits a 'shippo.tracking-updated' event via EventEmitter2 rather than calling OrdersService/DisputesService directly, specifically to avoid a forwardRef module cycle. The actual status-transition logic those services apply is out of this module's scope.",
+      "evidence": ["apps/api/src/shipping/shippo-webhook.service.ts:28-46", "apps/api/src/shipping/shipping.module.ts:15-24"],
+      "classification": "confirmed-by-code",
+      "note": "Cross-reference orders-disputes agent's output for the consuming side."
+    },
+    {
+      "id": "BR-SHIPPING-011",
+      "module": "shipping",
+      "rule": "Shipment.labelUrl/qrCodeUrl store long-lived (~1 year), unauthenticated Shippo bearer links containing shipping PII. The endpoint returning them to a seller is outside this module's 6-endpoint scope, but the data originates in this module's Shipment model.",
+      "evidence": ["apps/api/prisma/schema.prisma:1206-1216"],
+      "classification": "gap-confirmed-by-linear",
+      "linearRefs": ["BRI-848"],
+      "note": "Flagged as a boundary-relevant security gap, not fixable within this module's own endpoints."
+    }
+  ]
+}

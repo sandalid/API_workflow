@@ -1,0 +1,221 @@
+{
+  "module": "offers",
+  "evidenceClassificationLegend": {
+    "CODE": "Read directly from apps/api/src/offers/*.ts or apps/mobile/src/utils/offerState.ts — the strongest evidence; cites file:line",
+    "TEST": "Confirmed by an existing *.spec.ts/.test.ts case asserting the exact behavior — cites the spec file",
+    "FIXDOC": "Confirmed via a docs/fix/offers/BRI-*.md point-in-time write-up — cites the doc",
+    "TICKET": "Confirmed via Linear ticket text (BRI-*/REDB1-*) only, not independently re-verified in code — cites the ticket id",
+    "SUPERSEDED": "The rule as originally specified in BRI-54 no longer matches shipped behavior; the epic's own text says so"
+  },
+  "rules": [
+    {
+      "id": "BR-OFFERS-001",
+      "rule": "An offer amount must not exceed the listing price; equal-to-list is allowed.",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:679 (validateOfferBounds), :1602-1604 (counterOffer ceiling, applies to either party)",
+      "specSource": "BRI-54 Business Rule 1 — resolves the 'below' vs 'not more than' conflict in favor of 'not more than' (equal allowed)"
+    },
+    {
+      "id": "BR-OFFERS-002",
+      "rule": "The offer floor is seller-set (Listing.minOfferPercent, percent of price) when the seller configured one; otherwise a 50% platform default (MIN_OFFER_RATIO) applies. The floor is never a hard platform minimum layered on top of a seller's own lower number.",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:112, :183-191 (resolveOfferFloorCents)",
+      "specSource": "BRI-54 Business Rule 1a — was an open question at epic time ('seller-set, platform-wide, or both?'); resolved 2026-08-31 per BRI-38 (cited in code comment)"
+    },
+    {
+      "id": "BR-OFFERS-003",
+      "rule": "A new offer's floor/ceiling checks (BR-OFFERS-001/002) are enforced identically on createOffer, createWalletHoldIntent, and a BUYER's own counterOffer. A SELLER's counter is exempt from the floor (conceding against their own stated minimum is theirs to give).",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:428 (createOffer), :612 (createWalletHoldIntent), :1606-1617 (counterOffer, floor only when userId === offer.buyerId)"
+    },
+    {
+      "id": "BR-OFFERS-004",
+      "rule": "The negotiation window is 24 hours. Every counter (either side) restarts the full 24-hour window from the counter's own timestamp — it does not run from the original offer.",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:75 (OFFER_WINDOW_MS doc comment), :1688-1693 (counterOffer sets a fresh expiresAt)",
+      "specSource": "BRI-54 Business Rule 3 — originally flagged as 'pending client confirmation' (Policies doc said reset, epic's working assumption said no-reset); resolved by BRI-357 toward 'every counter resets' per a cited 'Buyer Oct 1 doc'"
+    },
+    {
+      "id": "BR-OFFERS-005",
+      "rule": "Acceptance is turn-based: only the party who did NOT write the last history entry may accept/decline/counter. The turn is derivable from history (not from status, which is stuck at 'countered' after round one) and is published on the DTO as awaitingFrom.",
+      "evidence": "CODE+TEST+FIXDOC",
+      "source": "apps/api/src/offers/offers.service.ts:226-260 (nextResponderId, assertRespondable), :326-330 (toDto awaitingFrom)",
+      "fixDoc": "docs/fix/offers/BRI-248.md — the bug this rule's DTO exposure fixed (seller had no action after a buyer counter-counter because clients derived turn from status alone)"
+    },
+    {
+      "id": "BR-OFFERS-006",
+      "rule": "Each party may send at most 3 counters per offer (6 negotiation rounds total). Hitting the cap blocks only Counter; Accept and Decline stay available.",
+      "evidence": "CODE+TEST",
+      "source": "apps/api/src/offers/offers.service.ts:84 (MAX_COUNTERS_PER_PARTY), :1589-1593 (counterOffer cap check), :342-344 (toDto countersRemaining)",
+      "specSource": "BRI-357"
+    },
+    {
+      "id": "BR-OFFERS-007",
+      "rule": "Cancelling (withdrawing) an offer is buyer-only and NOT turn-based — a buyer may withdraw even while the seller holds the last move. The seller's equivalent action is Decline, not Cancel.",
+      "evidence": "CODE+FIXDOC",
+      "source": "apps/api/src/offers/offers.service.ts:1299-1338 (cancelOffer)",
+      "specSource": "BRI-54 User Journey 'Buyer cancels offer while pending'"
+    },
+    {
+      "id": "BR-OFFERS-008",
+      "rule": "A seller can never make an offer on, or accept/counter/decline an offer involving, their own listing as the buyer — self-dealing is blocked server-side independent of any client-side hiding.",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:426 (createOffer, 400), :611 (createWalletHoldIntent, 400)",
+      "specSource": "BRI-54 Business Rule 12, confirmed 2026-07-25 Product Owner direct decision",
+      "note": "OrdersService.create enforces the equivalent order-side rule with ForbiddenException (403) at apps/api/src/orders/orders.service.ts:314 — Offers uses BadRequestException (400) for the identical business rule. Inconsistent HTTP status for the same rule across modules; worth its own test case (TS-OFFERS checks both)."
+    },
+    {
+      "id": "BR-OFFERS-009",
+      "rule": "A buyer may hold at most one open (pending/countered, unexpired) offer per listing at a time. Settled offers (declined/cancelled/expired/accepted) do not count — re-offering after any of those is an explicit allowed flow.",
+      "evidence": "CODE+TEST",
+      "source": "apps/api/src/offers/offers.service.ts:500-503 (createOffer), apps/api/src/offers/offers.repository.ts:186-196 (findOpenForBuyer)",
+      "specSource": "BRI-54 Validation Rules; BRI-252 fix doc traces the exact client-side predicate this mirrors"
+    },
+    {
+      "id": "BR-OFFERS-010",
+      "rule": "Multiple buyers may hold independent open offers on the same listing simultaneously; the seller answers each thread independently. Buyers can never see competing offers or how many exist on the item.",
+      "evidence": "CODE+TEST",
+      "source": "apps/api/src/offers/offers.repository.ts:228-237 (findUnpaidForListing, scoped per-listing not per-buyer); toDto exposes no sibling-offer data to a buyer-facing read",
+      "specSource": "BRI-54 Business Rule 5 / BRI-57"
+    },
+    {
+      "id": "BR-OFFERS-011",
+      "rule": "At most one ACCEPTED offer may exist per listing at any time, enforced at the DB level by a hand-written partial unique index (Offer_listingId_accepted_unique WHERE status='accepted'), backstopping an application-level check-then-write race.",
+      "evidence": "CODE+FIXDOC",
+      "source": "apps/api/src/offers/offers.service.ts:929-934 (application check, ConflictException), :1076-1112 (P2002 catch: refund + cancel order + re-notify)",
+      "fixDoc": "docs/fix/rca-2026-09-07-offer-accepted-duplicate-deploy-block.md; apps/api/prisma/manual-sql/2026-09-05-add-offer-accepted-unique-index.sql",
+      "specSource": "BRI-280 (the bug that forced this rule to be made DB-level, not just application-level)"
+    },
+    {
+      "id": "BR-OFFERS-012",
+      "rule": "Accepting an offer closes every other open (and any already-ACCEPTED-but-unpaid) offer on the same listing immediately upon acceptance — not deferred until 'confirmed payment' as the original spec text said.",
+      "evidence": "CODE+SUPERSEDED",
+      "source": "apps/api/src/offers/offers.service.ts:1132 (cancelCompetingOffers call, fires once the accept's own capture+inventory-commit has happened — which in the current atomic-accept design IS the same instant as acceptance), :1181-1187 (closeSiblingOffers catch-all)",
+      "specSource": "BRI-54 Business Rule 6 as originally written said 'acceptance alone does not cancel the others — confirmed payment does'; the epic's own 2026-08-31 retrospective UN-TICKED this criterion because BRI-280 shipped the opposite, matching the signed-off OfferAcceptConfirm.tsx screen's promise to the seller. Treat the original Business Rule 6 text as superseded.",
+      "note": "Because accept is now atomic (capture happens synchronously inside acceptOffer before any status write), 'on acceptance' and 'on confirmed payment' are the same instant for the happy path — the old distinction between the two timings has collapsed, not just been reassigned."
+    },
+    {
+      "id": "BR-OFFERS-013",
+      "rule": "When one offer is accepted and payment clears, a LOSING buyer's notification never reveals the winning price or who won — except when the losing buyer IS the winner under a different route (they bought the item outright while also holding an open offer on it), in which case the copy names that explicitly ('You bought X, so your open offer was closed').",
+      "evidence": "CODE+FIXDOC",
+      "source": "apps/api/src/offers/offers.service.ts:1386-1434 (cancelCompetingOffers notification branching: boughtItThemselves / lostAfterAccept / sold_to_other)",
+      "fixDoc": "docs/fix/offers/BRI-270.md"
+    },
+    {
+      "id": "BR-OFFERS-014",
+      "rule": "Accept, Decline and Counter are all blocked (409) once the listing's inventory is exhausted by any channel (another accepted-and-paid offer, or a Buy Now sale) — availability, not listing status, is the check. Decline is deliberately exempt: declining a dead offer commits the seller to nothing.",
+      "evidence": "CODE+TEST",
+      "source": "apps/api/src/offers/offers.service.ts:875-888 (assertStillAvailable), applied at :936 (accept) and :1595 (counter), explicitly NOT applied to declineOffer",
+      "fixDoc": "docs/fix/offers/BRI-270.md (added this guard; found the Buy Now confirm path wasn't closing competing offers at all before this)"
+    },
+    {
+      "id": "BR-OFFERS-015",
+      "rule": "A new negotiation (createOffer) may only be opened against a listing whose status is approved or active — narrower than checkout's active|approved|reserved set, because a reserved listing already hides Make Offer on the buyer's product page. Accept/decline/counter on an ALREADY-OPEN negotiation are explicitly NOT re-gated by listing status (only by availability, per BR-OFFERS-014) so a pause mid-negotiation doesn't kill an in-flight thread.",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:270 (OFFERABLE_STATUSES), :298-302 (assertOfferable doc comment explicitly scopes this to opening only)",
+      "specSource": "BRI-44"
+    },
+    {
+      "id": "BR-OFFERS-016",
+      "rule": "Deleting, pausing, or re-pricing-across-$2000 a listing closes every open offer on it (event-driven, LISTING_OFFERS_CANCEL_EVENT), releases each one's Stripe hold, and notifies the buyer with reason-specific copy. Does not touch an already-ACCEPTED offer (a committed sale).",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:1494-1543 (cancelOpenOffersForListing), apps/api/src/offers/listing-offers-cancel.event.ts",
+      "specSource": "BRI-54 Business Rule 8 / BRI-366"
+    },
+    {
+      "id": "BR-OFFERS-017",
+      "rule": "A block between a buyer and seller silently withdraws every still-open offer between that exact pair (across every listing), with Stripe hold release, but sends NO notification (a block should not announce itself).",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:1545-1571 (cancelOffersBetween)",
+      "specSource": "BRI-64"
+    },
+    {
+      "id": "BR-OFFERS-018",
+      "rule": "A payment authorization hold (manual-capture PaymentIntent) is placed on the buyer's card/wallet at OFFER SUBMISSION, before the seller responds — not at acceptance. Capture happens only on accept.",
+      "evidence": "CODE+FIXDOC",
+      "source": "apps/api/src/offers/offers.service.ts:505-536 (card path hold creation inside createOffer), :953-961 (capture inside acceptOffer)",
+      "specSource": "BRI-54 Business Rule 11, confirmed 2026-07-22; the hold itself was NOT implemented at epic-acceptance-criteria time (2026-08-31 retrospective marked this unticked) and was built afterward under Epic 4/BRI-155 — current code has it live.",
+      "fixDoc": "docs/fix/offers/BRI-233.md documents the pre-Epic-4 state where no hold existed at all"
+    },
+    {
+      "id": "BR-OFFERS-019",
+      "rule": "Exactly one of paymentMethodId (card) or walletPaymentIntentId (pre-confirmed wallet hold) must be supplied to createOffer; they are mutually exclusive. A wallet hold is independently re-verified server-side (status, customer match, bounded derived-tax sanity check) before being trusted.",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:444-483"
+    },
+    {
+      "id": "BR-OFFERS-020",
+      "rule": "A counter changes the hold amount, so the old hold is replaced: a fresh hold is authorized at the new total FIRST, and the old one is only cancelled after the new one succeeds (never a gap with no hold). This re-authorization is CARD-ONLY — a wallet-originated hold cannot be re-priced and the counter is rejected outright for that case (decline + re-offer is the only path).",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:1619-1679 (counterOffer hold re-authorization)"
+    },
+    {
+      "id": "BR-OFFERS-021",
+      "rule": "Expiry (pending/countered past expiresAt) is settled LAZILY, only on a GET /offers read for one of the two parties involved — there is no scheduled sweep. Until either party opens their offer list, an expired offer still shows as pending/countered, its hold is not released, and nobody is notified.",
+      "evidence": "CODE+TICKET",
+      "source": "apps/api/src/offers/offers.service.ts:778-847 (getOffers calls expireStaleAndNotify + the stale-holds sweep), apps/api/src/offers/offers.repository.ts:105-163 (doc comments explicitly state 'there is no scheduler in the API')",
+      "ticketRef": "BRI-535 — Backlog, open: asks for a platform-wide scheduled job (via the existing queue module) rather than per-user on-read settlement. NOT implemented as of this analysis."
+    },
+    {
+      "id": "BR-OFFERS-022",
+      "rule": "On a failed capture at accept time, the offer is left exactly as it was (no retry, no state change) and the caller gets an immediate 400. This does NOT implement the client's confirmed resolution of the capture-failure conflict ('20a': retry capture for 15 minutes, then cleanly cancel with both parties notified and the listing fully reopened).",
+      "evidence": "CODE+TICKET",
+      "source": "apps/api/src/offers/offers.service.ts:953-961",
+      "ticketRef": "BRI-297 — Backlog, open. BRI-54's epic text frames this as the single most consequential unresolved conflict in the whole spec (Business Rule 11a / Scenario 20a vs 20b)."
+    },
+    {
+      "id": "BR-OFFERS-023",
+      "rule": "closeSiblingOffers (the unconditional catch-all sibling-closer invoked at the end of acceptOffer) closes offers without releasing their Stripe holds — only cancelCompetingOffers (invoked earlier in the same method, conditional on the sale having exhausted the listing) releases holds. In the current single-unit-only listing model this is masked (cancelCompetingOffers already closes everything with holds released before closeSiblingOffers runs), but the gap is real at the code level.",
+      "evidence": "CODE+TICKET",
+      "source": "apps/api/src/offers/offers.service.ts:1206-1245 (closeSiblingOffers — no stripe.cancelOfferPaymentIntent call in the loop), contrast with :1401-1403 (cancelCompetingOffers DOES call it)",
+      "ticketRef": "BRI-589 — Canceled with comment 'Not applicable — listings have no quantity (BRI-366)'. Ticket closed as moot given the current single-unit model, not as fixed in code."
+    },
+    {
+      "id": "BR-OFFERS-024",
+      "rule": "An offer's shippingCents and taxCents are snapshotted once (at createOffer/counterOffer time) and never re-read from the listing afterward. A subsequent accept's capture and the Order it creates both read these snapshots, never the listing's live shippingPrice.",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:691-706 (offerHoldTotal doc comment), apps/api/prisma/schema.prisma:1625-1633 (Offer.shippingCents column comment)",
+      "specSource": "BRI-460 checkout wiring, supersedes an earlier 2026-09-17 fixed-$10-shipping decision"
+    },
+    {
+      "id": "BR-OFFERS-025",
+      "rule": "An accepted offer's price is honoured at the Order it creates even if the listing's price has since changed — the Order is built from offer.amountCents, never a live listing re-price.",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:982-1009 (acceptOffer order-total construction reads offer.amountCents/taxCents/shippingCents exclusively)",
+      "specSource": "BRI-54 Business Rule 7"
+    },
+    {
+      "id": "BR-OFFERS-026",
+      "rule": "An offer-created Order's seller payout is computed against the LISTING's own locked-in commissionRateBps (captured at listing-creation time), never the platform's current rate at accept time.",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:999-1009",
+      "specSource": "BRI-352/BRI-602"
+    },
+    {
+      "id": "BR-OFFERS-027",
+      "rule": "Money is integer cents throughout every offer computation (amount, shipping, tax, floor, ceiling, payout).",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/dto/create-offer.dto.ts (amountCents: @IsInt), apps/api/src/offers/offers.service.ts throughout"
+    },
+    {
+      "id": "BR-OFFERS-028",
+      "rule": "Admin oversight of offers is read-only at MVP — no admin accept/decline/counter/cancel endpoint exists in this module (admin's own GET /admin/offers is a separate, out-of-scope endpoint in the admin module).",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.controller.ts (8 endpoints total, none role-gated to ADMIN)",
+      "specSource": "BRI-54 Business Rule 10"
+    },
+    {
+      "id": "BR-OFFERS-029",
+      "rule": "A card whose expiry month/year has passed cannot back a new offer or a counter's re-hold; a card with no recorded expiry (expYear===0, pre-dates the expiry columns) is treated as NOT expired rather than unknown-equals-invalid.",
+      "evidence": "CODE",
+      "source": "apps/api/src/offers/offers.service.ts:157-162 (isCardExpired)"
+    },
+    {
+      "id": "BR-OFFERS-030",
+      "rule": "An unsupported card brand (e.g. UnionPay) cannot back a new offer, even if it was saved before brand-checking existed.",
+      "evidence": "CODE+TICKET",
+      "source": "apps/api/src/offers/offers.service.ts:482 (createOffer card-path check)",
+      "ticketRef": "BRI-238"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "module": "offers",
+  "note": "What a test needs ON HAND before it can call each endpoint, how to get it, and what's missing/fixture-only. All ids/paths are evidence-cited against apps/api/src/offers/*.ts and the DTOs.",
+  "prerequisites": {
+    "buyerAccount": {
+      "needs": ["authenticated user (JWT)", "a Stripe customer (stripeCustomerId) — see payment-methods module", "at least one saved PaymentMethod (card) OR the ability to run the wallet-hold-intent flow", "at least one saved Address"],
+      "whereCreated": "users module (signup) -> payment-methods module (POST /payment-methods, attaches a card and lazily creates the Stripe customer via getUserStripeInfo) -> addresses module (POST /me/addresses or equivalent)",
+      "gapIfMissing": "createOffer/createWalletHoldIntent both 400 with distinct messages per missing piece ('No Stripe customer found…', 'Add a valid payment method…', 'Add a shipping address…') — a test can use these as positive assertions of the precondition chain's ORDER (card checked before address, per BRI-234's fix doc)."
+    },
+    "sellerAccount": {
+      "needs": ["a DIFFERENT authenticated user than the buyer", "isSeller true (seller onboarding complete) — otherwise they cannot list a negotiable listing in the first place", "no cross-module seller-specific gate on the offers endpoints themselves (no RolesGuard/@Roles on OffersController — any authenticated user, including a non-seller, could in principle call accept/decline/counter if they happened to be offer.sellerId, which by construction they are since they listed it)"],
+      "whereCreated": "sellers module onboarding flow"
+    },
+    "listingInOfferableState": {
+      "needs": ["Listing.status IN ('approved','active')", "Listing.negotiable === true (default true per BRI-499 — every listing ships offer-enabled)", "Listing.sellerId !== the test buyer's id (self-dealing guard)", "seller not mid-deletion (no pending_deletion / deletionScheduledFor in the near past — findIdsWithSellerLeaving)"],
+      "whereCreated": "listings module — POST /listings then an admin/auto-approval step depending on price tier (see listings module docs)",
+      "gapIfMissing": "409 Conflict with a deliberately generic message ('This listing isn't available right now…') that does not distinguish paused/in-review/rejected/seller-leaving — a test asserting this message cannot also assert WHICH of those four caused it from the response alone; would need to inspect the listing's own status via a different endpoint to disambiguate."
+    },
+    "existingOfferInEachState": {
+      "pending": "createOffer with no prior negotiation on that listing by that buyer",
+      "countered": "createOffer then PATCH /offers/:id/counter as the seller",
+      "accepted": "createOffer then PATCH /offers/:id/accept as the seller (requires a real or test-mode Stripe PaymentIntent capture to succeed)",
+      "declined": "createOffer then PATCH /offers/:id/decline as the seller",
+      "cancelled": "createOffer then PATCH /offers/:id/cancel as the buyer — OR engineer one of the system-actor cancel paths (sibling-close on a competing accept, listing pause/delete/reprice, a block between the two parties)",
+      "expired": "createOffer, then either (a) manipulate expiresAt directly in a test DB / fixture since there is no API to fast-forward 24h, or (b) wait — not practical for automated testing; a GET /offers call by either party after expiresAt has passed is what flips the row, so the test must call GET /offers (not just PATCH) to observe the transition",
+      "gapNote": "There is no POST/seed endpoint to directly create an offer in a given status — every state transition must go through the real action sequence. For `expired` specifically, there is no way to trigger it without either DB-level fixture manipulation or a genuine 24h wait, since expiry is lazy/read-time only (BR-OFFERS-021) and there is no scheduled job or admin fast-forward endpoint. This is the single hardest-to-construct fixture in the module."
+    },
+    "paymentMethodForWalletHoldIntent": {
+      "needs": ["a Stripe customer (same as card path)", "NO local PaymentMethod/card is required — wallet-hold-intent bypasses the card check entirely and relies on the native wallet sheet confirming client-side"],
+      "gapNote": "createWalletHoldIntent is independently testable from createOffer's wallet branch — the former just creates the unconfirmed hold; the latter requires a genuinely CONFIRMED PaymentIntent (status requires_capture) to pass its verification. A test harness without real Stripe Elements/wallet-sheet access cannot drive the full wallet path end-to-end without directly manipulating the PaymentIntent via the Stripe test API (confirming it out-of-band) — this is a meaningful test-environment gap, not a code gap."
+    },
+    "inventoryRowForAvailabilityTests": {
+      "needs": ["an Inventory row for the listing (onHand/committed/unavailable) to exercise assertStillAvailable's primary branch, OR deliberately omit one to exercise its stock-fallback branch"],
+      "whereCreated": "inventory module, typically created alongside listing creation",
+      "gapNote": "To construct the 'item already sold through another channel' scenario (BR-OFFERS-014), a test needs a SECOND, independent sale to exhaust the listing — either a completed Buy Now order (via the orders module) or a second accepted-and-paid offer — before attempting accept/counter on the first offer. This is a multi-module test setup (offers + orders + inventory), not an offers-only fixture."
+    },
+    "duplicateAcceptRaceFixture": {
+      "needs": ["two buyers, each with their own open offer on the SAME single listing, each with a valid hold", "the ability to fire two PATCH /offers/:id/accept requests concurrently (true race) rather than sequentially, to exercise the DB-level unique-index P2002 path rather than only the earlier application-level check"],
+      "gapNote": "A sequential test (accept A, then accept B) only exercises the in-memory findUnpaidForListing check (step 3 of acceptOffer) and never reaches the DB constraint / P2002 catch block at all. A true concurrency test needs either two near-simultaneous requests from a load-testing tool, or a way to pause one request mid-flight (e.g. a test double delaying the capture call) while the other completes first. This is the highest-value and hardest-to-construct scenario in the module given the manual-sql evidence of a real past incident here."
+    }
+  },
+  "crossModuleTouchpoints": [
+    {"module": "listings", "via": "ListingsRepository.findById / findIdsWithSellerLeaving", "direction": "offers reads listings"},
+    {"module": "inventory", "via": "InventoryRepository.getByListingId / incrementCommitted", "direction": "offers reads+writes inventory"},
+    {"module": "users", "via": "UsersRepository.findById (seller email for notifications, winner username for seller notification)", "direction": "offers reads users"},
+    {"module": "mail", "via": "MailService.sendNewOffer", "direction": "offers triggers email, best-effort"},
+    {"module": "notifications", "via": "NotificationsService.create", "direction": "offers triggers in-app notifications throughout every state transition"},
+    {"module": "payment-methods", "via": "PaymentMethodsRepository (direct repository import, documented cycle-avoidance exception) — findById, getUserStripeInfo", "direction": "offers reads payment methods"},
+    {"module": "payments", "via": "StripeService (forwardRef both directions) — createOfferHoldPaymentIntent, createUnconfirmedOfferHoldPaymentIntent, captureOfferPaymentIntent, cancelOfferPaymentIntent, refundCapturedOfferPaymentIntent, confirmOrderPayment, calculateTax, retrievePaymentIntentStatus", "direction": "offers calls Stripe-backed payments logic for every money-moving step"},
+    {"module": "addresses", "via": "AddressesService.findAll", "direction": "offers reads addresses"},
+    {"module": "orders", "via": "OrdersRepository (direct repository import, documented cycle-avoidance exception) — createWithItems, updateStatus", "direction": "offers CREATES an Order directly on accept, bypassing OrdersService.create's own guards (see offers.md § endpoint 5, step 8)"},
+    {"module": "orders (reverse)", "via": "OrdersService imports OffersRepository + OffersService to price Buy-Now-via-offer line items and to call cancelCompetingOffers after a Buy Now payment confirms", "direction": "orders reads+calls offers"}
+  ],
+  "fixtureVsRealFlag": {
+    "mobileSeededDemoOffers": "apps/mobile/src/mocks/offers.ts seeds offers with ids matching /^of-/; offersStore.ts's isMock() check routes ALL state transitions on these through a pure client-side applyLocal() rather than any API call. A test driving the mobile app against these fixtures is NOT exercising the backend at all — only a real cuid-id offer created via POST /offers exercises the API described in this module."
+  }
+}

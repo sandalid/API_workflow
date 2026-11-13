@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2026-11-10",
+  "scopeNote": "This file maps setup dependencies for the highest-value, highest-complexity test targets (the flows in flows.md, plus a few standalone endpoints with real preconditions) rather than mechanically repeating 'requires a valid JWT' for all 288 endpoints. Most simple reads/CRUD endpoints have no dependency beyond 'an authenticated actor of the right role, and optionally a resource the actor owns' — those are covered once in the 'genericPatterns' section rather than per-endpoint. Every setup step below cites the real endpoint/fixture that produces it; nothing here is an invented endpoint or field. Where a required field or state could not be verified from the code read in this session, it is marked \"unknown\": true with a note rather than guessed.",
+
+  "genericPatterns": [
+    {
+      "pattern": "owned-resource-read-or-write",
+      "appliesTo": "Most GET/:id, PATCH/:id, DELETE/:id routes across addresses, saved-searches, recent-searches, payment-methods, orders (buyer/seller-scoped), listings (seller-scoped writes), sellers' own-profile routes",
+      "setup": [
+        { "step": 1, "action": "Obtain a valid access token for the actor", "via": "Flow 1 (POST /auth/otp/verify or /auth/login)", "producesField": "token" },
+        { "step": 2, "action": "Create the resource the test will act on, as that same actor", "via": "the resource's own POST endpoint (e.g. POST /me/addresses, POST /saved-searches)", "producesField": "the created resource's id" }
+      ],
+      "crossUserVariant": "To test an ownership-rejection (403/404) scenario, step 2 must be performed by a DIFFERENT actor (second token from step 1 repeated for a second account), then step 3 attempts the read/write with the FIRST actor's token against the second actor's resource id."
+    },
+    {
+      "pattern": "role-gated-action",
+      "appliesTo": "Every @Roles('SELLER')-gated route (sellers, offers, listings writes, inventory, saved-searches is not role-gated but listed here for contrast — correction: saved-searches has no role gate) and @Roles(Role.ADMIN)-gated routes (admin, listings approve/reject, reviews admin, messaging admin)",
+      "setup": [
+        { "step": 1, "action": "Obtain a token for an actor whose isSeller===true (RolesGuard checks this LIVE against the DB on every request, not the JWT claim)", "via": "Flow 2, specifically POST /sellers/apply (instant activation, no Stripe requirement)" },
+        { "step": 1, "action": "[ADMIN variant] Obtain a token for an actor whose User.role==='ADMIN'", "via": "no self-service endpoint — an ADMIN role must be seeded or set by another admin via PATCH /admin/users/:id/role", "unknown": true, "note": "No endpoint in this codebase lets an account become ADMIN except another admin's own role-change call or direct seed/DB insertion; this is the one real test-fixture gap in the whole role system worth flagging explicitly." }
+      ]
+    }
+  ],
+
+  "flows": [
+    {
+      "flowId": "DEP-OFFER-ACCEPT",
+      "description": "Reach a successfully ACCEPTED offer (the highest-risk state transition in the system)",
+      "steps": [
+        { "step": 1, "actor": "seller", "action": "Create a seller account and a live listing", "via": "POST /auth/otp/verify -> POST /sellers/apply -> POST /listings", "producesField": "listing.id", "requiredState": "listing.status IN (approved, active)" },
+        { "step": 2, "actor": "buyer", "action": "Create a different buyer account; must have a saved address and a saved payment method before an offer can be created", "via": "POST /auth/otp/verify -> POST /me/addresses -> POST /me/payment-methods", "producesField": "address.id, paymentMethod.id", "requiredState": "BR-OFFERS-019: buyer must have a Stripe customer, verified existence check runs inside createOffer itself" },
+        { "step": 3, "actor": "buyer", "action": "Preview then create an offer within [floor, listing.price]", "via": "POST /offers/preview -> POST /offers", "inputFields": "listingId, amountCents, paymentMethodId", "producesField": "offer.id (status: pending)", "sideEffect": "a manual-capture payment hold is placed on the buyer's card at THIS step, not at accept" },
+        { "step": 4, "actor": "seller", "action": "Accept the offer (must be the seller's turn — assertRespondable checks nextResponderId, not status)", "via": "PATCH /offers/:id/accept", "requiredState": "offer.status IN (pending, countered), !expired, inventory.available>0 for the listing", "sideEffect": "captures the hold, creates an Order directly (bypassing OrdersService.create's own guards), commits inventory, closes sibling offers" },
+        { "step": 5, "resultingState": "offer.status==='accepted', a new Order exists at status 'placed' already paid, Inventory.committed incremented for the listing" }
+      ],
+      "cleanupLimitations": "No endpoint reverses an accepted offer. The only way to 'undo' this state for a repeatable test is a fresh listing+offer pair per run, or a direct DB fixture reset (out of scope for API-level test design per this task's constraints).",
+      "orderingConstraints": "Step 2's address+payment-method MUST exist before step 3's createOffer call, which checks both inline.",
+      "asyncCompletionConditions": "None — acceptOffer is fully synchronous end-to-end; no webhook/queue is required to observe the resulting state."
+    },
+    {
+      "flowId": "DEP-OFFER-EXPIRY",
+      "description": "Reach a buyer-visible 'lapsed' offer (to test the lazy expiry-settlement path, BR-OFFERS-021)",
+      "steps": [
+        { "step": 1, "note": "Steps 1-3 of DEP-OFFER-ACCEPT, but do NOT accept." },
+        { "step": 2, "action": "Wait for OFFER_WINDOW_MS (24h) to elapse from the offer's createdAt (or the most recent counter's timestamp)", "unknown": true, "note": "No endpoint accelerates or overrides this window — a real-time test must either wait 24h or seed an Offer row directly with a backdated expiresAt, which this analysis does not endorse inventing as an API-level fixture since no such endpoint exists." },
+        { "step": 3, "actor": "either party", "action": "Call GET /offers (the only endpoint that settles expiry — lazy-on-read, BR-OFFERS-021)", "sideEffect": "the stale offer is flipped to a lapsed/expired-equivalent state and its hold released as a side effect of this GET; the response reflects the now-settled state" }
+      ],
+      "cleanupLimitations": "No sweep exists; an expired-but-unread offer stays visibly 'pending' until someone calls GET /offers for one of the two parties.",
+      "note": "This is the one flow in the whole knowledge base where the only realistic test strategy without a time-travel fixture is a long-running wait or a direct DB timestamp edit outside any endpoint — flagged honestly rather than inventing a non-existent 'force-expire' endpoint."
+    },
+    {
+      "flowId": "DEP-CHECKOUT-BUYNOW",
+      "description": "Reach a successfully paid Buy-Now Order",
+      "steps": [
+        { "step": 1, "actor": "seller", "action": "Create a seller + live listing with inventory.available>0", "via": "Flow 2 + POST /listings" },
+        { "step": 2, "actor": "buyer", "action": "Different buyer account with a saved address + a Stripe-test-mode payment method attached", "via": "POST /me/addresses, POST /me/payment-methods" },
+        { "step": 3, "actor": "buyer", "action": "Preview, then create the order", "via": "POST /checkout/preview -> POST /orders", "inputFields": "listingIds, addressId, paymentMethodId, expectedPriceCents (must match the listing's CURRENT price, BR-ORDERS-006)", "producesField": "order.id, order.stripePaymentIntentId", "sideEffect": "an atomic 15-minute inventory hold is claimed before any Stripe call" },
+        { "step": 4, "actor": "buyer (client-driven)", "action": "Confirm payment", "via": "POST /orders/:id/confirm-payment", "requiredState": "order.buyerId===caller", "resultingState": "Payment.status==='succeeded', listing flips to sold, inventory hold finalized" },
+        { "step": 4, "alternative": "asynchronous", "action": "Stripe's own payment_intent.succeeded webhook lands independently and writes the identical Payment-succeeded state (double coverage, BR-PAYMENTS-004) — a test can rely on EITHER path, they converge on the same row" }
+      ],
+      "cleanupLimitations": "No cancel-and-refund-to-zero-state endpoint exists for a clean re-run; a test suite should use a fresh listing per checkout test rather than attempting to reset a sold listing (PATCH /listings/:id/status accepting arbitrary enum values IS technically possible per BR-LISTINGS-006's confirmed gap, but relying on that gap as a test-reset mechanism would itself be testing undefined behavior).",
+      "asyncCompletionConditions": "If relying on the webhook path (step 4 alternative) rather than the synchronous confirm-payment call, the test needs either a real Stripe test-mode webhook delivery or a way to trigger StripeService.handleWebhook directly — not verified in this pass whether a test-only trigger endpoint exists (none was found in the 288-endpoint inventory)."
+    },
+    {
+      "flowId": "DEP-DISPUTE-FULL-CYCLE",
+      "description": "Reach a refunded dispute via the realistic (mock-label) path",
+      "steps": [
+        { "step": 1, "note": "Complete DEP-CHECKOUT-BUYNOW through to order.status==='delivered'", "via": "PATCH /orders/:id/status {status:'delivered'} as the seller (or the equivalent sellers.controller.ts route)" },
+        { "step": 2, "actor": "buyer", "action": "Open a dispute within 3 days of deliveredAt", "via": "POST /orders/:id/dispute", "requiredState": "order.status==='delivered', no existing Dispute for this order" },
+        { "step": 3, "actor": "seller", "action": "Either submit evidence or accept the return", "via": "PATCH /sellers/me/orders/:id/dispute/evidence OR PATCH /sellers/me/orders/:id/dispute/accept-return", "note": "accept-return is the FASTEST path to a refund — it runs the identical internal approveInternal() path an admin approval would, skipping the admin step entirely" },
+        { "step": 3, "alternative": "If evidence was submitted instead of accept-return, an admin must then decide", "via": "POST /admin/dispute-cases/:id/approve" },
+        { "step": 4, "actor": "buyer", "action": "Mark the return shipped (refunds IMMEDIATELY with no carrier check, since no listing in this system carries package dimensions — BR-DISPUTES-010)", "via": "POST /orders/:id/dispute/ship", "requiredState": "dispute.status==='approved'", "resultingState": "dispute.status==='refunded' (terminal), ConnectService.refundOrder has run" }
+      ],
+      "cleanupLimitations": "A refunded dispute is terminal; no endpoint reopens it. refund_failed (a possible outcome of step 4 if ConnectService.refundOrder throws) is a confirmed DEAD END with no retry endpoint anywhere — a test deliberately targeting refund_failed needs a way to make the underlying Stripe reversal fail (e.g. a connected account with insufficient balance), which this analysis does not have a ready-made fixture path for.",
+      "orderingConstraints": "Step 2 cannot happen before step 1's delivered status; step 4 cannot happen before step 3's approval (direct or admin)."
+    },
+    {
+      "flowId": "DEP-ACCOUNT-DELETION",
+      "description": "Reach a scheduled-for-deletion account, then verify restoration-on-login",
+      "steps": [
+        { "step": 1, "actor": "buyer", "action": "Create an account with NO active orders, pending payouts, or open disputes (so eligibility check passes cleanly)", "via": "Flow 1" },
+        { "step": 2, "action": "Confirm eligibility", "via": "GET /users/me/deletion", "requiredResponse": "canDelete: true" },
+        { "step": 3, "action": "Request the deletion code", "via": "POST /users/me/deletion/request", "sideEffect": "a real email send is AWAITED (not fire-and-forget) — a test harness needs either a real mailbox/mail-capture tool or (non-prod only) GET /users/me/deletion/dev-code to retrieve the code without reading an inbox" },
+        { "step": 4, "action": "Confirm with the code", "via": "POST /users/me/deletion/confirm", "producesField": "scheduledFor (ISO date), windowDays (30 or 60)" },
+        { "step": 5, "action": "To test restoration: sign back in via email/OTP/Google (NOT Apple/Facebook, which are confirmed to skip this per BR-AUTH-014) before scheduledFor", "via": "POST /auth/login or /auth/otp/verify or /auth/social/google", "resultingState": "accountRestored in the response is non-null; deletionScheduledFor is cleared" }
+      ],
+      "cleanupLimitations": "A test that does NOT restore the account will have it genuinely purged by the hourly worker once scheduledFor passes — this is real, out-of-band, destructive (though non-PII-scrubbing, not row-deleting) state change outside any test's direct control. A test suite should always restore test accounts it schedules for deletion, or accept they will be purged on the real schedule."
+    },
+    {
+      "flowId": "DEP-MESSAGING-BLOCK",
+      "description": "Reach a blocked-pair state and verify both message-send failure modes",
+      "steps": [
+        { "step": 1, "action": "Two accounts, buyer and seller, with a live listing between them", "via": "Flow 2 + POST /listings" },
+        { "step": 2, "actor": "buyer", "action": "Start a conversation", "via": "POST /conversations {sellerId or listingId}", "producesField": "conversation.id" },
+        { "step": 3, "actor": "buyer", "action": "Block the seller (either from within the conversation or standalone)", "via": "POST /conversations/:id/block OR POST /me/blocked-users/:sellerId", "sideEffect": "silently cancels any open offer between the pair, with NO notification to the seller" },
+        { "step": 4, "actor": "seller", "action": "Attempt to send a message in the (now-hidden-for-buyer) conversation", "expectedResult": "403 RECIPIENT_BLOCKED (from the seller's perspective, they are blocked by the recipient)" },
+        { "step": 4, "alternative": true, "actor": "buyer", "action": "Attempt to send a message", "expectedResult": "403 BLOCKED_BY_ME" }
+      ],
+      "cleanupLimitations": "DELETE /me/blocked-users/:userId reverses the block and restores the hidden conversation for the unblocking side — a clean, available cleanup path, unlike several other flows in this file."
+    }
+  ],
+
+  "unresolvedDependencyQuestions": [
+    { "question": "How does a test account acquire the real ADMIN role?", "note": "No self-service endpoint exists; only another admin's PATCH /admin/users/:id/role or a direct seed/DB write. If POST /seed/run creates an admin account (modules/seed.md confirms it does, via seedAdmin()), that is the only API-adjacent path found — but its credentials are deliberately not reproduced in this knowledge base per the task's own constraint, and the endpoint's own safety profile (NODE_ENV-gated only) should be understood before relying on it (see gaps-and-conflicts.md)." },
+    { "question": "Can a test reliably trigger a genuine Stripe webhook delivery (payment_intent.succeeded, charge.refunded, account.updated, etc.) without a real Stripe test-mode account?", "note": "Not resolved in this pass — no test-only webhook-trigger endpoint was found in the 288-endpoint inventory. A test relying on webhook-driven state transitions needs either a real Stripe test-mode integration or to construct a signed test payload against STRIPE_WEBHOOK_SECRET directly (bypassing the API's own guard, which is itself a meaningful thing to test)." },
+    { "question": "Can a test reliably trigger a genuine Shippo tracking webhook?", "note": "The shippo MCP integration failed to connect this session, so Shippo's own sandbox/test-webhook tooling could not be inspected. A test needs only a local Shipment row with a matching (carrier, trackingNumber) to exercise the webhook HANDLER itself (confirmed, no outbound Shippo call happens in that handler) — but producing a REAL Shippo-originated delivery for a true end-to-end test was not resolved." },
+    { "question": "Does any fixture path create a Payout in 'reversal_failed' state (needed to test POST /admin/payouts/:orderId/retry-reversal)?", "note": "Not found. This state is reached only when a real Stripe transfer-reversal attempt fails (e.g. insufficient connected-account balance) — no direct-creation endpoint exists." }
+  ]
+}

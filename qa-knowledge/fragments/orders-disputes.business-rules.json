@@ -1,0 +1,289 @@
+{
+  "batch": "orders-disputes",
+  "rules": [
+    {
+      "id": "BR-ORDERS-001",
+      "title": "Order state machine — 8 statuses, seller forward-only transitions",
+      "statement": "OrderStatus = placed|processing|packed|shipped|out_for_delivery|delivered|cancelled|returned. Seller-driven PATCH /orders/:id/status may only advance per ALLOWED_TRANSITIONS and is restricted to SELLER_ALLOWED_STATUSES (processing|packed|shipped|out_for_delivery|delivered|returned). cancelled/returned are terminal for the seller path. Admin status changes bypass this table entirely.",
+      "evidence": [
+        "apps/api/prisma/schema.prisma:78-87",
+        "apps/api/src/orders/orders.service.ts:45,105-125,1340-1349"
+      ],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-002",
+      "title": "Self-dealing guard — seller cannot buy own listing",
+      "statement": "OrdersService.create() 403s with ForbiddenException if any cart listing's sellerId === the buying userId. This is the authoritative server guard (BRI-72); a client-side gap once existed (a frozen useAuthGate closure could let a seller reach Buy Now via the guest sign-up resume path) but the server guard was never bypassed.",
+      "evidence": ["apps/api/src/orders/orders.service.ts:309-316", "apps/mobile/CLAUDE.md BRI-72 note"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-003",
+      "title": "Single-seller cart enforced",
+      "statement": "A cart mixing listings from more than one seller is rejected with 400 before any Stripe call — one Order/PaymentIntent/payout is attributed to found[0].sellerId.",
+      "evidence": ["apps/api/src/orders/orders.service.ts:317-326"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-004",
+      "title": "Atomic inventory claim + 15-minute Buy Now hold + real cron release",
+      "statement": "create() claims inventory via InventoryRepository.commitForReservation per item BEFORE any Stripe call, holdExpiresAt = now+15min. A multi-item cart rolls back every already-claimed item if one item's claim fails. ReservationReleaseProcessor is a real BullMQ cron (every minute) that re-verifies Stripe PaymentIntent status before releasing an expired hold — this is the fix for BRI-79/BRI-818 (two buyers both succeeding on a 1-unit listing).",
+      "evidence": [
+        "apps/api/src/orders/orders.service.ts:481-501",
+        "apps/api/src/orders/reservation-release.processor.ts:14-85",
+        "apps/api/src/orders/reservation.constants.ts:18,28"
+      ],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-005",
+      "title": "Checkout idempotency key + unique PaymentIntent constraint + P2002 recovery",
+      "statement": "buildCheckoutIdempotencyKey hashes userId+sorted cart fingerprint+addressId+paymentMethodId+a 10-second time bucket to dedupe Stripe PaymentIntent creation on retry/double-tap. Order.stripePaymentIntentId carries a DB-level unique constraint (added via manual-sql after a live QA find: two Order rows could otherwise be created for one reused PaymentIntent, stranding the loser at 'placed' forever). create()'s catch returns the winning duplicate's order instead of a 500 on P2002.",
+      "evidence": [
+        "apps/api/src/orders/orders.service.ts:77-100,506-543,589-615",
+        "apps/api/prisma/schema.prisma:1093",
+        "apps/api/prisma/manual-sql/2026-09-06-add-order-payment-intent-unique.sql"
+      ],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-006",
+      "title": "Mid-checkout price-change guard (expectedPriceCents)",
+      "statement": "A Buy Now item's DTO carries expectedPriceCents (the price shown when checkout began). If the listing's current price differs at create() time, the whole order is rejected with 409. Offer-backed items are exempt (already locked to offer.amountCents).",
+      "evidence": ["apps/api/src/orders/orders.service.ts:409-427", "apps/api/src/orders/dto/create-order.dto.ts:31-39"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-007",
+      "title": "Offer-backed checkout pricing is snapshotted, never re-derived from the live listing",
+      "statement": "When an item carries offerId, price and shippingPrice come from the accepted Offer's own amountCents/shippingCents snapshot (falling back to FLAT_SHIPPING_RATE_CENTS for a pre-BRI-460 offer), in both preview() and create() identically — fixes BRI-445 (preview previously quoted list price for an offer-backed item).",
+      "evidence": ["apps/api/src/orders/orders.service.ts:175-185,381-407,442-443"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-008",
+      "title": "Tax calculated once via a shared helper, never duplicated between preview and create",
+      "statement": "calculateOrderTax is called identically by preview() and create() — one Stripe Tax Calculation per cart item, never one blended line. A Stripe Tax failure throws a controlled 400, never a raw SDK error. Fixes BRI-363 (previously duplicated, drifted flat-rate math).",
+      "evidence": ["apps/api/src/orders/orders.service.ts:218-220,252-283,447-448"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-009",
+      "title": "Seller payout excludes tax and shipping; commission computed per item at its own locked rate",
+      "statement": "sellerAmount = subtotal - platformFeeAmount - discount (never includes shippingTotal/tax — Redspur is the marketplace facilitator of record). platformFeeAmount is summed per item using that item's own listing.commissionRateBps (falls back to DEFAULT_COMMISSION_RATE_BPS), never one blended rate on the order total — so a cart mixing listings created under two different platform rates keeps each its locked-in rate (BRI-352/BRI-363).",
+      "evidence": ["apps/api/src/orders/orders.service.ts:458-479"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-010",
+      "title": "Buyer cancellation request/approve/deny — pre-shipment only, 24h lazy auto-approve",
+      "statement": "requestCancellation only succeeds while order.status is in {placed, processing, packed} (BEFORE_SHIPPED_STATUSES) and no request is already pending. Seller approve/deny endpoints live in sellers.controller.ts (PATCH /sellers/me/orders/:id/approve-cancellation and .../deny-cancellation), calling OrdersService.approveCancellation/denyCancellation. An unanswered request auto-approves after 24h, but ONLY lazily on the next read of that order/order-list (maybeAutoApproveCancellation) — there is no cron for this path.",
+      "evidence": [
+        "apps/api/src/orders/orders.service.ts:50-51,902-917,1494-1561",
+        "apps/api/src/sellers/sellers.controller.ts:242-262"
+      ],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-011",
+      "title": "Seller direct cancel is immediate; only one of two reasons pauses the listing",
+      "statement": "cancelOrder (seller, pre-shipment only) has no approval step. reason === 'item_unavailable' pauses the listing (status -> inactive) to prevent auto-relist inviting another unfulfillable sale; reason === 'damaged' does not pause it — the listing silently returns to sale as inventory.available recomputes. BRI-614 (Linear, open) flags the missing confirm step and the asymmetric pause behavior as a required UX fix.",
+      "evidence": ["apps/api/src/orders/orders.service.ts:1522-1532,1623-1634"],
+      "classification": "confirmed-by-code + linear:BRI-614 (open)"
+    },
+    {
+      "id": "BR-ORDERS-012",
+      "title": "Mobile hides buyer-initiated cancellation entirely; server endpoint remains fully live",
+      "statement": "BRI-359 (client decision, 22 Sep 2026): a bought order is treated as binding. OrderDetail.tsx has its entire Request Cancellation UI/handlers commented out. POST /orders/:id/request-cancellation, CancelOrderModal.tsx, and ordersApi.requestCancellation() are all still present and callable — just unreachable from any current mobile screen. A direct API call is the only way to exercise this flow today.",
+      "evidence": ["apps/mobile/src/screens/profile/OrderDetail.tsx:57-80,104-108,207-236,357-362,783-809"],
+      "classification": "confirmed-by-code + linear:BRI-359 (done)"
+    },
+    {
+      "id": "BR-ORDERS-013",
+      "title": "Confirm-receipt: buyer-only, delivered-only, blocked while dispute active, 3-day lazy auto-confirm",
+      "statement": "POST /orders/:id/confirm-receipt requires order.buyerId === caller, order.status === 'delivered', not already receiptConfirmedAt, and no active (non-terminal) dispute. A compare-and-set repository write prevents a double-stamp racing the 3-day auto-confirm sweep. The 3-day auto-confirm (maybeAutoConfirmReceipt) and its payout-transfer retry (maybeRetryTransfer) are both lazy-on-read only, no cron — BRI-516 (Linear, open/backlog) documents this exact gap: an order nobody opens never auto-completes past day 3.",
+      "evidence": ["apps/api/src/orders/orders.service.ts:1171-1233,1274-1277"],
+      "classification": "confirmed-by-code + linear:BRI-516 (open)"
+    },
+    {
+      "id": "BR-ORDERS-014",
+      "title": "7-day seller-never-shipped auto-cancel is lazy-on-read, no cron",
+      "statement": "maybeAutoCancelUnshipped fires past SHIP_WINDOW_MS (7 calendar days, chosen to cover the seller app's 5-business-day 'Ship by' banner) from Order.createdAt for any order still in a before-shipped status, but only when a read of that order/order-list triggers it. BRI-591 (Linear, open/backlog) documents this exact gap.",
+      "evidence": ["apps/api/src/orders/orders.service.ts:59-67,934-949"],
+      "classification": "confirmed-by-code + linear:BRI-591 (open)"
+    },
+    {
+      "id": "BR-ORDERS-015",
+      "title": "Admin status change bypasses ALLOWED_TRANSITIONS but preserves history/deliveredAt/inventory-release side effects",
+      "statement": "applyAdminStatusChange (cross-module, called from AdminService) deliberately skips the seller-path transition table so support can correct a stuck order to any state, but it still writes an OrderStatusHistory row, stamps deliveredAt on a transition into 'delivered', and runs releaseInventoryForStatus — fixing a prior bug (prisma/manual-sql/2026-08-31-repair-leaked-inventory-holds.sql) where a bare admin repository write left committed inventory permanently stuck. Admin cancelling a shipped/delivered order does NOT issue a refund automatically — that is a separate dedicated endpoint, per the code's own comment.",
+      "evidence": ["apps/api/src/orders/orders.service.ts:1382-1485", "apps/api/prisma/manual-sql/2026-08-31-repair-leaked-inventory-holds.sql"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-016",
+      "title": "Order number is the last 8 characters of the id, upper-cased — single source of truth",
+      "statement": "Every server-side notification body and the PDF receipt use id.slice(-8).toUpperCase(); apps/mobile/src/utils/orderNumber.ts is the single mobile source (fixes BRI-669 where three Seller Hub screens had a divergent 5-char copy).",
+      "evidence": ["apps/api/src/orders/orders.service.ts:1280,1509,1641,1721,1737", "apps/mobile/src/utils/orderNumber.ts:1-16"],
+      "classification": "confirmed-by-code + linear:BRI-669/REDB1-82 (QA Passed)"
+    },
+    {
+      "id": "BR-ORDERS-017",
+      "title": "Cancellation reason is a stored KEY, not display text — buyer and seller see different wording from the same key",
+      "statement": "GET /orders/:id/history parses the cancelled row's free-text description server-side into a structured cancelReason key (item_unavailable|damaged) via parseCancelReason — the API never returns display prose. apps/mobile/src/utils/cancelReason.ts owns the buyer-facing sentence; the seller's own cancel sheet renders a different label from the identical key (BRI-271, by design, not a bug).",
+      "evidence": ["apps/api/src/orders/orders.service.ts:1680-1697", "apps/mobile/src/utils/cancelReason.ts:1-24"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-018",
+      "title": "Two routes, identical service method for seller status updates",
+      "statement": "PATCH /orders/:id/status (orders.controller.ts) and PATCH /sellers/me/orders/:id/status (sellers.controller.ts) both call OrdersService.updateStatus with no divergence — a duplicate route surface, not a bug, but means tests for one cover the other's business logic exactly.",
+      "evidence": ["apps/api/src/orders/orders.controller.ts:150-161", "apps/api/src/sellers/sellers.controller.ts:230-240"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-ORDERS-019",
+      "title": "GET /seller/orders status filter is an unvalidated string, not a Prisma/DTO enum",
+      "statement": "FindSellerOrdersQueryDto.status is typed @IsString(), not @IsEnum(OrderStatus) — an invalid status value is silently cast and passed to Prisma's where clause rather than rejected at the boundary.",
+      "evidence": ["apps/api/src/orders/dto/find-seller-orders-query.dto.ts:21-24", "apps/api/src/orders/orders.service.ts:1700-1706"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-001",
+      "title": "Dispute state machine — 7 statuses, denied/withdrawn/refunded terminal on both client and server",
+      "statement": "DisputeStatus = seller_evidence_window (default)|awaiting_decision|approved|denied|withdrawn|refunded|refund_failed. Server's TERMINAL_DISPUTE_STATUSES and mobile's utils/disputeStatus.ts agree exactly: denied|withdrawn|refunded are terminal; approved and refund_failed are NOT terminal in either copy.",
+      "evidence": [
+        "apps/api/prisma/schema.prisma:195-207",
+        "apps/api/src/orders/orders.service.ts:69-75",
+        "apps/mobile/src/utils/disputeStatus.ts:1-17"
+      ],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-002",
+      "title": "Report window: 3 days from delivery, one dispute per order",
+      "statement": "reportDispute requires order.status === 'delivered' and Date.now() - (order.deliveredAt ?? order.updatedAt) <= 3 days. Dispute.orderId is @unique — a second report on the same order is rejected with 400 'A claim already exists for this order.'",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:28-32,66-84", "apps/api/prisma/schema.prisma:1350"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-003",
+      "title": "Seller evidence window: 24h, lazy-on-read advance to awaiting_decision",
+      "statement": "EVIDENCE_WINDOW_MS = 24h, stored as Dispute.sellerEvidenceDeadline at creation. maybeAdvanceEvidenceWindow is the only mechanism that flips an unresponded dispute to awaiting_decision — checked on GET /orders/:id/dispute, admin getCaseForAdmin, and every row returned by listOpenCasesForAdmin. No cron.",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:28,91,111-141,464-489"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-004",
+      "title": "Buyer evidence add is gated to the seller_evidence_window status only",
+      "statement": "addBuyerEvidence requires !decidedAt AND dispute.status === 'seller_evidence_window' — rejects once the case has moved to awaiting_decision or beyond, closing BRI-141 ('Buyer can add evidence and resubmit claim while dispute is under review').",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:170-184"],
+      "classification": "confirmed-by-code + linear:BRI-141 (ticket open, fix present in code)"
+    },
+    {
+      "id": "BR-DISPUTES-005",
+      "title": "Seller submitting evidence unconditionally moves the case to awaiting_decision",
+      "statement": "submitSellerEvidence has no window-status precondition beyond !decidedAt (via assertOpen) — a seller can submit evidence nominally after the 24h deadline as long as admin hasn't acted, and the act of submitting always flips status regardless of remaining time.",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:202-219"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-006",
+      "title": "Seller 'accept return' shortcut is the identical code path as an admin approval",
+      "statement": "sellerAcceptReturn calls approveInternal(dispute, sellerId, sellerAccepted=true) — the exact same function an admin's approveCaseForAdmin calls, including the real Shippo return-label purchase and the atomic decidedAt claim.",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:221-226,491-497,520-563"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-007",
+      "title": "Decision claim is atomic — prevents double-buying a return label on a race or double-click",
+      "statement": "approveInternal and denyCaseForAdmin both call DisputesRepository.claimUndecided (an updateMany WHERE decidedAt IS NULL), not a read-then-write check — closes a BRI-414 code-review finding where a seller-accepts/admin-approves race, or a double-click, could both pass a plain read check and both purchase a real paid Shippo label for the same dispute. A failed downstream label purchase releases the claim (releaseUndecidedClaim) so the dispute isn't permanently stuck decided-but-unresolved.",
+      "evidence": ["apps/api/src/disputes/disputes.repository.ts:120-145", "apps/api/src/disputes/disputes.service.ts:520-545"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-008",
+      "title": "Return label: real Shippo purchase, mock fallback only for genuinely-not-attempted cases, hard failure otherwise",
+      "statement": "purchaseReturnLabel returns null (caller falls back to a mock label URL) ONLY when missing package dimensions, missing shipping address, no seller profile, or an over-cap parcel. A genuine Shippo API failure or a non-SUCCESS label purchase now throws ServiceUnavailableException instead of silently faking a label (BRI-414 fix) — admins are notified via notifyAdminsShippoFailure. Linear BRI-657 ('generic contact Redspur administration error') matches this exact 503 surfacing through sellerAcceptReturn with no retry affordance in the mobile UI.",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:565-703"],
+      "classification": "confirmed-by-code + linear:BRI-657 (open)"
+    },
+    {
+      "id": "BR-DISPUTES-009",
+      "title": "Refund trigger is atomically claimed and shared by buyer self-report and real carrier-scan poll/webhook",
+      "statement": "triggerReturnRefund is the single refund path for both markReturnShipped (buyer taps 'I've shipped it') and maybeAdvanceReturnFromCarrierTracking/applyReturnTrackingStatus (real Shippo tracking). DisputesRepository.claimReturnShipped (a returnShippedAt CAS) prevents two concurrent triggers (a carrier-scan poll racing a non-idempotent webhook redelivery racing the buyer's own tap) from both calling ConnectService.refundOrder.",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:238-326,342-401", "apps/api/src/disputes/disputes.repository.ts:147-158"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-010",
+      "title": "Buyer's manual 'I've shipped it' tap still refunds immediately with no carrier verification for any dispute without a real purchased label",
+      "statement": "markReturnShipped calls triggerReturnRefund unconditionally once status === 'approved' — it does not require an actual carrier scan. Since no listing currently carries package dimensions (per the code's own comment), every real-world dispute's return label falls back to the mock URL, meaning the buyer's own tap is in practice still the sole refund trigger today. This is Linear BRI-594's exact open concern ('refund on carrier scan... not when the buyer taps').",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:228-248,584-612"],
+      "classification": "confirmed-by-code + linear:BRI-594 (open)"
+    },
+    {
+      "id": "BR-DISPUTES-011",
+      "title": "5-day return-ship window auto-releases the payout hold, but does not resolve the dispute",
+      "statement": "maybeAutoReleasePayoutHold (lazy-on-read, no cron) flips Order.payoutHeld back to false once SHIP_WINDOW_MS has elapsed on an 'approved' dispute the buyer never shipped — the dispute status itself stays 'approved' indefinitely. A late markReturnShipped still runs the normal reversal-aware refund path afterward.",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:34-40,143-168"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-012",
+      "title": "Refund failure is a dead-end queryable state with no retry mechanism found",
+      "statement": "If connect.refundOrder throws inside triggerReturnRefund, the dispute transitions to 'refund_failed' and every admin is notified (dispute_refund_failed). No endpoint, lazy sweep, or admin action in this module transitions a dispute OUT of refund_failed — manual DB/Stripe-dashboard intervention appears to be the only path, matching the manual-sql evidence (2026-09-03-add-dispute-refund-failed-states.sql) that made this a first-class state rather than a log line, without (in this module) a corresponding recovery action.",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:283-299", "apps/api/prisma/manual-sql/2026-09-03-add-dispute-refund-failed-states.sql"],
+      "classification": "confirmed-by-code (gap)"
+    },
+    {
+      "id": "BR-DISPUTES-013",
+      "title": "refundOrder blocks on an open genuine Stripe chargeback (StripeDispute), deliberately not on Dispute.payoutHeld",
+      "statement": "ConnectService.refundOrder throws 400 if ConnectRepository.findOpenStripeDisputeByOrderId finds an open chargeback. It deliberately does NOT gate on Order.payoutHeld, because the internal Dispute flow itself sets that boolean true while its own refund is in flight — gating on it would self-block the very call meant to resolve it.",
+      "evidence": ["apps/api/src/connect/connect.service.ts:1208-1219"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-014",
+      "title": "Opening a dispute is not blocked by a prior buyer receipt confirmation",
+      "statement": "reportDispute checks only order.status === 'delivered' and the 3-day window from deliveredAt. confirmReceipt does NOT change order.status away from 'delivered' (only sets receiptConfirmedAt/receiptAutoConfirmed), so a buyer who already confirmed receipt can still open a dispute within the same 3-day window. Linear BRI-593 ('Block opening a claim after the buyer has confirmed delivery') documents this exact open gap.",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:66-82", "apps/api/src/orders/orders.service.ts:1171-1200"],
+      "classification": "confirmed-by-code + linear:BRI-593 (open)"
+    },
+    {
+      "id": "BR-DISPUTES-015",
+      "title": "Seller is never notified of claim approve/deny/refund outcomes",
+      "statement": "approveInternal, denyCaseForAdmin, and triggerReturnRefund each notify only dispute.order.buyerId. The seller is notified once, at dispute_opened, and never again for the resolution. Linear BRI-619 ('Tell the seller when a claim is approved, denied or refunded') documents this exact open gap, confirmed directly against these three functions.",
+      "evidence": ["apps/api/src/disputes/disputes.service.ts:94-100,311-323,510-517,556-562"],
+      "classification": "confirmed-by-code + linear:BRI-619 (open)"
+    },
+    {
+      "id": "BR-DISPUTES-016",
+      "title": "Mobile DisputeStatus screen has no explicit branch for refund_failed",
+      "statement": "DisputeStatus.tsx's explicit status branches cover refunded/approved/denied/withdrawn only; a dispute in refund_failed falls through to the generic 'Under review' branch (seller_evidence_window/awaiting_decision UI), which renders a Withdraw button. Since refund_failed is only reached after decidedAt is already set (at the original approval), tapping Withdraw would hit the server's assertOpen guard and fail with 'This case has already been decided' — a confusing dead end rather than the correct 'contact support' messaging.",
+      "evidence": ["apps/mobile/src/screens/profile/DisputeStatus.tsx:110-248", "apps/api/src/disputes/disputes.service.ts:713-715"],
+      "classification": "confirmed-by-code (gap)"
+    },
+    {
+      "id": "BR-DISPUTES-017",
+      "title": "Admin dispute-case queue excludes approved cases by design",
+      "statement": "DisputesRepository.findOpenForAdmin filters status IN (seller_evidence_window, awaiting_decision) only — an 'approved' case stuck on an unshipped return is invisible on GET /admin/dispute-cases and only reachable via GET /admin/dispute-cases/:id with a known id (e.g. a support agent investigating a specific order), which is the only entry point that runs maybeAutoReleasePayoutHold/maybeAdvanceReturnFromCarrierTracking for that case. Documented as intentional in the code's own comment, not a bug, but a real test-data/discoverability gap.",
+      "evidence": ["apps/api/src/disputes/disputes.repository.ts:160-180", "apps/api/src/disputes/disputes.service.ts:471-489"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-018",
+      "title": "Two distinct dispute concepts can coexist on one order",
+      "statement": "The internal Dispute model (this module, buyer-initiated arbitration claim) and the StripeDispute model (a genuine bank chargeback, admin module's /admin/stripe-chargebacks* territory) are independent and can both exist simultaneously for the same order. Order.dispute and Order.stripeDisputes are separate relations; the mobile OrderDetail screen renders both independently ('Dispute in progress' vs 'Payment disputed' cards).",
+      "evidence": ["apps/api/prisma/schema.prisma:1175-1176,1378-1424", "apps/mobile/src/screens/profile/OrderDetail.tsx:586-619"],
+      "classification": "confirmed-by-code"
+    },
+    {
+      "id": "BR-DISPUTES-019",
+      "title": "ReportDisputeDto.description accepts an empty string",
+      "statement": "ReportDisputeDto.description is @IsString() @MaxLength(1000) with no @IsNotEmpty() — a dispute can be opened with description: '' and pass validation, even though the field is nominally required (no @IsOptional either).",
+      "evidence": ["apps/api/src/disputes/dto/report-dispute.dto.ts:10-13"],
+      "classification": "confirmed-by-code (validation gap)"
+    }
+  ]
+}
