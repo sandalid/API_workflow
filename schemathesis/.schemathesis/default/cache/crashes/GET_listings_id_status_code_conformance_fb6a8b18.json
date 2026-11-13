@@ -3,32 +3,33 @@
   "method": "GET",
   "path_template": "/listings/{id}",
   "fingerprint": "fb6a8b18",
-  "case_id": "XRQJOX",
-  "code_sample": "curl -X GET https://api-qa.redspur.com/api/listings/cmvarpj0u0067armb87izrkyx",
+  "case_id": "FURYkb",
+  "code_sample": "curl -X GET -H 'Authorization: [Filtered]' https://api-qa.redspur.com/api/listings/cmw9cm73h00jnu4pws0bwjpvy",
   "sequence": [
     {
       "method": "GET",
-      "url": "https://api-qa.redspur.com/api/listings/cmvarpj0u0067armb87izrkyx",
+      "url": "https://api-qa.redspur.com/api/listings/cmw9cm73h00jnu4pws0bwjpvy",
       "url_template": "https://api-qa.redspur.com/api/listings/{id}",
       "headers": {
         "User-Agent": "schemathesis/4.32.7",
         "Accept-Encoding": "gzip, deflate, zstd",
         "Accept": "*/*",
         "Connection": "keep-alive",
-        "X-Schemathesis-TestCaseId": "XRQJOX"
+        "Authorization": "[Filtered]",
+        "X-Schemathesis-TestCaseId": "FURYkb"
       },
       "response": {
         "status_code": 429,
         "headers": {
           "server": "nginx/1.28.3 (Ubuntu)",
-          "date": "Mon, 09 Nov 2026 05:46:51 GMT",
+          "date": "Mon, 09 Nov 2026 14:27:33 GMT",
           "content-type": "application/json; charset=utf-8",
           "content-length": "84",
           "connection": "keep-alive",
           "x-powered-by": "Express",
           "vary": "Origin",
           "access-control-allow-credentials": "[Filtered]",
-          "retry-after": "56",
+          "retry-after": "32",
           "etag": "W/\"54-42D1wjychKcC0TQvTay9LxgBFPw\""
         },
         "body": "{\"success\":false,\"statusCode\":429,\"message\":\"ThrottlerException: Too Many Requests\"}"
@@ -43,16 +44,14 @@
       ],
       "meta": {
         "generation": {
-          "time": 0.006029599986504763,
+          "time": 0.0008832000003167195,
           "mode": "positive"
         },
-        "components": {
-          "PATH": "positive"
-        },
+        "components": {},
         "phase": {
-          "name": "fuzzing",
+          "name": "examples",
           "data": {
-            "type": "FuzzingPhaseData",
+            "type": "ExamplesPhaseData",
             "description": "Positive test case",
             "location": null,
             "parameter": null,
@@ -60,19 +59,7 @@
             "mutations": []
           }
         },
-        "pool_draws": [
-          {
-            "location": "path",
-            "parameter_name": "id",
-            "resource_name": "Listing",
-            "resource_field": "id",
-            "source_operation": "GET /listings/{id}",
-            "source_status": 200,
-            "source_identity": null,
-            "source_input": false,
-            "source_query": null
-          }
-        ],
+        "pool_draws": [],
         "pool_misses": [],
         "semantic_draws": [],
         "dictionary_draws": [],
@@ -81,10 +68,12 @@
       },
       "path": "/listings/{id}",
       "path_parameters": {
-        "id": "cmvarpj0u0067armb87izrkyx"
+        "id": "cmw9cm73h00jnu4pws0bwjpvy"
       },
       "query": {},
-      "case_headers": {},
+      "case_headers": {
+        "Authorization": "[Filtered]"
+      },
       "cookies": {},
       "case_body": {
         "encoding": "none"

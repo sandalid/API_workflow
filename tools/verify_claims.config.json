@@ -1,0 +1,5 @@
+{
+  "_readme": "Folders the claim verifier may resolve citations against. The repo that holds this tool is always added. Override with --root or the VERIFY_ROOTS env var (';' separated).",
+  "roots": ["D:\\Redspur_Backend\\redspur-droplight"],
+  "drift_lines": 15
+}

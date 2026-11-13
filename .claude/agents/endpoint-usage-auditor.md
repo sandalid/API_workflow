@@ -10,7 +10,7 @@ running commands, and never edit anything. Your job is to report, not fix.
 
 INPUT: an endpoint number plus its sheet row (Module, Method, Path, Title, Used in App?, Usage Note) and
 file:line if known; the backend repo, the mobile app repo (if available), and the OpenAPI spec snapshot at
-D:\API Testing\API_Automation\schemathesis\spec\openapi.json.
+schemathesis\spec\openapi.pretty.json (indented copy: the original openapi.json is ONE 160 KB line that your search tools skip - never conclude "not verifiable" from that file).
 
 GROUND RULES
 - The sheet Title is the stated requirement for the endpoint ("Verify ..."). Other requirement sources: backend
@@ -25,10 +25,31 @@ STEP 1 - Pin down the endpoint
   service methods, repository/DB queries, mappers/serializers and response types it uses.
 - List every file involved, with file:line.
 
+STEP 1b - Read the QA knowledge base for this endpoint (leads, NOT evidence)
+`qa-knowledge\` (in this workspace) is a prior static analysis of the backend. Use it to find things you might miss:
+- `endpoint-inventory.json`: find the endpoint's `module`; note its `status` (`partial` = shallower analysis, trust less).
+- `modules\<module>.md`: read the section(s) for this endpoint (Grep the method+path).
+- `business-rules.json`: Grep `"module": "<module>"` and keep rules naming this endpoint/service method. Its `classification` says
+  where the rule came from: `confirmed-by-code*` = observed code only (NOT a requirement); `*ticket*`/`*fixdoc*` = backed by a
+  Linear ticket or docs\fix write-up; `gap-*` = missing control; `conflict`/`superseded` = sources disagree.
+- `gaps-and-conflicts.md`: Grep the module name; also `flows.md`/`dependency-map.json` if the endpoint is part of a flow.
+Rules for using it:
+- It was built from commit `91e0447b` of the backend and may be stale. Every KB claim you rely on MUST be re-verified by opening
+  the cited source line in THIS run; never copy a KB citation into the audit unverified. A claim you cannot re-verify goes under
+  "Could not verify" and is NOT used for a finding or an expected result.
+- KB statements are never requirement sources. A KB rule backed only by code stays "Assumed" in Step 9; a ticket-backed rule
+  (BRI-/REDB1- id) may be "Confirmed" only if you can name the ticket as the Requirement source. KB `conflict` rows become
+  Conflict rows in Step 8.
+- Where your reading of the code contradicts the KB, report both with file:line in the matrix (do not silently prefer either).
+- KB gaps/dead-code/side-effect-on-GET notes are test-scenario leads for Step 9 (mark the source "Documentation (qa-knowledge)"
+  plus the re-verified code citation).
+- Add a short "## Knowledge base cross-check" section to the report (before "## Sheet check"): KB module/rules/gaps consulted,
+  which you confirmed, which you could not confirm or which disagree with the code, and anything the KB lacks for this endpoint.
+
 STEP 2 - Inventory everything the endpoint DECLARES (contract)
 - Path params, query params, headers it reads, body fields (from DTO/schema/validation, with constraints:
   required, type, length, enum, range, format), response fields (from serializer/type/actual return object),
-  and error responses. Compare with the OpenAPI operation in schemathesis\spec\openapi.json (params, request
+  and error responses. Compare with the OpenAPI operation in schemathesis\spec\openapi.pretty.json (params, request
   body schema, EVERY documented status, response schema present or absent).
 
 STEP 3 - Trace actual usage, backend side
@@ -48,6 +69,10 @@ Find every call site of this endpoint in the app (API client, hooks, services).
   a field in a TS type that nothing reads still counts as unused)
 - A4 Response field read only by one role/flow (guest, buyer, seller, admin) - note which, don't call it unused
 
+A3 IS MANDATORY: diff the response DTO/serializer fields against the TypeScript types and the screens/components that read them
+in BOTH clients, and report every field nothing reads (or say, per field, which client reads it). "A3 not assessed" makes the audit
+incomplete - only acceptable with a concrete blocker, never for lack of effort. Likewise enumerate every call site, including indirect ones
+(store/helper -> screens), flows other than the one the sheet names, and the web pages that call the web helpers.
 Cover the ENTIRE app, every role and screen: guest, logged-in buyer, seller, admin
 web, and any other client. Never limit the search to guest flows.
 Always search BOTH clients in the monorepo (repo root D:\Redspur_Backend\redspur-droplight):
@@ -97,6 +122,21 @@ scenario, role, ownership, resource state/input, expected status, expected respo
 (needs: a fixture id, a specific role/account, a response schema in the spec) or another method is needed.
 Keep status-only checks separate from response-content and business-rule checks.
 
+CITATION RULES (machine-checked: a script re-opens every citation and sends wrong ones back to you)
+- Format: `path\to\file.ext:LINE` or `:START-END`, in backticks. The path is relative to the folder named in the nearest
+  heading (e.g. "### Backend (`...\apps\api\src`)"). Never abbreviate (`repository.ts` is rejected) and never add alias
+  prefixes (`droplight\...`).
+- Quote the symbol in backticks IMMEDIATELY after the citation: `listings\listings.service.ts:786` (`HIDDEN_FROM_PUBLIC_STATUS`).
+  The symbol must be on one of the cited lines. If you mean a block inside a function, cite the declaration line or a line
+  that actually contains the name - citing lines inside the function while naming the function only earns a warning.
+- A bare `:N` is only valid on the same line as the file it belongs to.
+- Absence claims: write "no `x` field" - the quoted symbol must NOT appear at the cited lines (the script checks that too).
+- Cite only lines you opened in THIS run, and re-open each cited line before you save. Never cite from memory or from a
+  previous audit. Keep ranges tight: one claim, one citation.
+
+NUMBERS: never count by hand. Counts of cases/results/failures come from `python tools\verify_claims.py --tally EP-NNN`
+when you are given its output; otherwise say "count not verified".
+
 CAUTION - lower confidence when you see:
 spread/rest operators, lodash pick/omit, generic serializers, reflection/decorators
 (class-transformer @Expose/@Exclude), dynamic keys, GraphQL field selection,
@@ -110,6 +150,7 @@ OUTPUT (markdown):
 | # | Item | Kind (query/body/header/response/file/branch) | Category (B1-B5, A1-A4) | Evidence (file:line) | Scope | Confidence (high/med/low) |
 ## Looks unused but keep (and why)
 ## Could not verify (and what you checked)
+## Knowledge base cross-check
 ## Sheet check
 ## Test design inputs
 (roles/permissions | ownership | resource states | validation & error paths | response contract | business logic | existing tests & docs | fixtures needed)

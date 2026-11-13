@@ -1,0 +1,590 @@
+{
+ "run_id": "RUN-20261109-202850-EP-109-admin",
+ "schema_version": 1,
+ "interactions": [
+  {
+   "id": "YfpPMp",
+   "phase": "coverage",
+   "operation": "GET /sellers/me",
+   "method": "TRACE",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "negative",
+   "scenario": "Unspecified HTTP method: TRACE",
+   "response": {
+    "status": 405,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-type": "text/html",
+     "content-length": "166",
+     "connection": "close"
+    },
+    "elapsed": 1.173423,
+    "body": {
+     "text": "<html>\r\n<head><title>405 Not Allowed</title></head>\r\n<body>\r\n<center><h1>405 Not Allowed</h1></center>\r\n<hr><center>nginx/1.28.3 (Ubuntu)</center>\r\n</body>\r\n</html>\r\n",
+     "json": null,
+     "truncated": false,
+     "size": 166
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "failure",
+     "code": "ST204",
+     "message": "TRACE returned 405 without required `Allow` header Add `Allow` header listing supported methods (required by RFC 9110)"
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "admin"
+  },
+  {
+   "id": "ncC0Mq",
+   "phase": "coverage",
+   "operation": "GET /sellers/me",
+   "method": "QUERY",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "negative",
+   "scenario": "Unspecified HTTP method: QUERY",
+   "response": {
+    "status": 404,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-type": "application/json; charset=utf-8",
+     "content-length": "91",
+     "connection": "keep-alive",
+     "x-powered-by": "Express",
+     "vary": "Origin",
+     "access-control-allow-credentials": "[Filtered]",
+     "etag": "W/\"5b-r4UrW8QgFTE6BlOTb1ex5A6kGnA\""
+    },
+    "elapsed": 0.76941,
+    "body": {
+     "text": "{\"success\":false,\"statusCode\":404,\"message\":\"Cannot QUERY /sellers/me\",\"error\":\"Not Found\"}",
+     "json": {
+      "success": false,
+      "statusCode": 404,
+      "message": "Cannot QUERY /sellers/me",
+      "error": "Not Found"
+     },
+     "truncated": false,
+     "size": 91
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "failure",
+     "code": "ST204",
+     "message": "Unsupported method QUERY returned 404, expected 405 Method Not Allowed Return 405 for methods not listed in the OpenAPI spec"
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "admin"
+  },
+  {
+   "id": "9yjX5R",
+   "phase": "coverage",
+   "operation": "GET /sellers/me",
+   "method": "OPTIONS",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "negative",
+   "scenario": "Unspecified HTTP method: OPTIONS",
+   "response": {
+    "status": 204,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-length": "0",
+     "connection": "keep-alive",
+     "x-powered-by": "Express",
+     "vary": "Origin, Access-Control-Request-Headers",
+     "access-control-allow-credentials": "[Filtered]",
+     "access-control-allow-methods": "GET,HEAD,PUT,PATCH,POST,DELETE"
+    },
+    "elapsed": 0.239611,
+    "body": {
+     "text": "",
+     "json": null,
+     "truncated": false,
+     "size": 0
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "admin"
+  },
+  {
+   "id": "kl9cRT",
+   "phase": "coverage",
+   "operation": "GET /sellers/me",
+   "method": "GET",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "positive",
+   "scenario": "Default positive test case",
+   "response": {
+    "status": 403,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-type": "application/json; charset=utf-8",
+     "content-length": "92",
+     "connection": "keep-alive",
+     "x-powered-by": "Express",
+     "vary": "Origin",
+     "access-control-allow-credentials": "[Filtered]",
+     "x-ratelimit-limit": "100",
+     "x-ratelimit-remaining": "96",
+     "x-ratelimit-reset": "44",
+     "etag": "W/\"5c-lL9DQKK/Ar5C+b4L6O4xELbILaA\""
+    },
+    "elapsed": 0.244395,
+    "body": {
+     "text": "{\"success\":false,\"statusCode\":403,\"message\":\"Insufficient permissions.\",\"error\":\"Forbidden\"}",
+     "json": {
+      "success": false,
+      "statusCode": 403,
+      "message": "Insufficient permissions.",
+      "error": "Forbidden"
+     },
+     "truncated": false,
+     "size": 92
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "status_code_conformance",
+     "status": "failure",
+     "code": "ST103",
+     "message": "Received: 403 Documented: 200"
+    },
+    {
+     "name": "content_type_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "response_headers_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "response_schema_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "negative_data_rejection",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "positive_data_acceptance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "use_after_free",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "ensure_resource_availability",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "admin"
+  },
+  {
+   "id": "yRY5d9",
+   "phase": "coverage",
+   "operation": "GET /sellers/me",
+   "method": "GET",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization",
+    "content-type"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "negative",
+   "scenario": "Malformed Content-Type: multipart/form-data without boundary",
+   "response": {
+    "status": 403,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-type": "application/json; charset=utf-8",
+     "content-length": "92",
+     "connection": "keep-alive",
+     "x-powered-by": "Express",
+     "vary": "Origin",
+     "access-control-allow-credentials": "[Filtered]",
+     "x-ratelimit-limit": "100",
+     "x-ratelimit-remaining": "95",
+     "x-ratelimit-reset": "43",
+     "etag": "W/\"5c-lL9DQKK/Ar5C+b4L6O4xELbILaA\""
+    },
+    "elapsed": 0.24756,
+    "body": {
+     "text": "{\"success\":false,\"statusCode\":403,\"message\":\"Insufficient permissions.\",\"error\":\"Forbidden\"}",
+     "json": {
+      "success": false,
+      "statusCode": 403,
+      "message": "Insufficient permissions.",
+      "error": "Forbidden"
+     },
+     "truncated": false,
+     "size": 92
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "admin"
+  },
+  {
+   "id": "YXIXvY",
+   "phase": "fuzzing",
+   "operation": "GET /sellers/me",
+   "method": "GET",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "positive",
+   "scenario": "Positive test case",
+   "response": {
+    "status": 403,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-type": "application/json; charset=utf-8",
+     "content-length": "92",
+     "connection": "keep-alive",
+     "x-powered-by": "Express",
+     "vary": "Origin",
+     "access-control-allow-credentials": "[Filtered]",
+     "x-ratelimit-limit": "100",
+     "x-ratelimit-remaining": "94",
+     "x-ratelimit-reset": "42",
+     "etag": "W/\"5c-lL9DQKK/Ar5C+b4L6O4xELbILaA\""
+    },
+    "elapsed": 0.837703,
+    "body": {
+     "text": "{\"success\":false,\"statusCode\":403,\"message\":\"Insufficient permissions.\",\"error\":\"Forbidden\"}",
+     "json": {
+      "success": false,
+      "statusCode": 403,
+      "message": "Insufficient permissions.",
+      "error": "Forbidden"
+     },
+     "truncated": false,
+     "size": 92
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "status_code_conformance",
+     "status": "failure",
+     "code": "ST103",
+     "message": "Received: 403 Documented: 200"
+    },
+    {
+     "name": "content_type_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "response_headers_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "response_schema_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "negative_data_rejection",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "positive_data_acceptance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "use_after_free",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "ensure_resource_availability",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "admin"
+  }
+ ],
+ "execution_errors": []
+}

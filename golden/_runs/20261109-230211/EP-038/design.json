@@ -1,0 +1,584 @@
+{
+ "cases": [
+  {
+   "ep": "EP-038",
+   "key": "SEC:pending-anon-status",
+   "scenario": "Anon GET pending_approval listing -> 404 (status only)",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "non-owner",
+   "check_level": "Status-only",
+   "preconditions": "pending_approval fixture",
+   "test_data": "id=pending_approval fixture, no token",
+   "steps": "GET /listings/{id} no Authorization",
+   "expected_status": 404,
+   "response_assertions": "",
+   "business_outcome": "Hidden from public",
+   "expected": "404",
+   "expected_source": "Backend code + docs BRI-636/BRI-800 (not in sheet)",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit scenario 1",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "fixture_state": "pending_approval"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "RC:pending-anon-body",
+   "scenario": "Anon GET pending_approval: 404 body message",
+   "test_type": "Functional",
+   "role": "anon",
+   "ownership": "non-owner",
+   "check_level": "Response-content",
+   "preconditions": "pending_approval fixture",
+   "test_data": "id=pending_approval fixture",
+   "steps": "GET /listings/{id} no token",
+   "expected_status": 404,
+   "response_assertions": "body.message == 'Listing not found'",
+   "business_outcome": "No leak of listing data",
+   "expected": "404 with not-found message",
+   "expected_source": "Backend code / service spec",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit scenario 1",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "fixture_state": "pending_approval"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "message",
+      "op": "equals",
+      "value": "Listing not found"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:pending-owner",
+   "scenario": "Owner GET own pending_approval -> 200",
+   "test_type": "Business Rule",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Business-rule",
+   "preconditions": "pending_approval fixture owned by ST_USER",
+   "test_data": "id=pending_approval fixture, owner token",
+   "steps": "GET /listings/{id} Bearer owner",
+   "expected_status": 200,
+   "response_assertions": "body.listingStatus == 'pending_approval'",
+   "business_outcome": "Owner can see own pending listing",
+   "expected": "200 for owner",
+   "expected_source": "Existing service spec, docs BRI-636",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit scenario 3",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "user",
+    "inputs": {
+     "id": {
+      "fixture_state": "pending_approval"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "listingStatus",
+      "op": "equals",
+      "value": "pending_approval"
+     }
+    ],
+    "ownership": "owner"
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:pending-nonowner-buyer",
+   "scenario": "Non-owner buyer GET pending_approval -> 404",
+   "test_type": "Business Rule",
+   "role": "other",
+   "ownership": "non-owner",
+   "check_level": "Business-rule",
+   "preconditions": "pending_approval fixture; second (buyer) account",
+   "test_data": "buyer token",
+   "steps": "GET /listings/{id} Bearer buyer",
+   "expected_status": 404,
+   "response_assertions": "body.message == 'Listing not found'",
+   "business_outcome": "Pending hidden from non-owner",
+   "expected": "404",
+   "expected_source": "Service spec, docs BRI-636",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "audit scenario 2",
+   "blocked_reason": "No second (non-owner buyer) account exists; fixtures _owners only has ST_USER"
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:pending-admin",
+   "scenario": "Admin GET pending_approval -> 200",
+   "test_type": "Business Rule",
+   "role": "admin",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "pending_approval fixture; admin account",
+   "test_data": "admin token",
+   "steps": "GET /listings/{id} Bearer admin",
+   "expected_status": 200,
+   "response_assertions": "body.listingStatus == 'pending_approval'",
+   "business_outcome": "Admin can see pending",
+   "expected": "200",
+   "expected_source": "Service spec",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "audit scenario 4",
+   "blocked_reason": "Admin account/token not listed in fixtures; confirm availability"
+  },
+  {
+   "ep": "EP-038",
+   "key": "CONF:draft-anon",
+   "scenario": "Anon GET draft listing: sheet says hidden, code returns 200",
+   "test_type": "Business Rule",
+   "role": "anon",
+   "ownership": "non-owner",
+   "check_level": "Business-rule",
+   "preconditions": "draft fixture",
+   "test_data": "id=draft fixture, no token",
+   "steps": "GET /listings/{id}",
+   "expected_status": "404 per sheet / 200 per code",
+   "response_assertions": "TBD",
+   "business_outcome": "Draft visibility to non-owner",
+   "expected": "Undetermined",
+   "expected_source": "Sheet title vs code listings.service.ts:60 and spec :965",
+   "requirement_status": "Conflict",
+   "execution_method": "Manual",
+   "source": "audit scenario 5 / conflict",
+   "blocked_reason": "Clarify: must a draft listing be hidden from non-owner/non-admin (sheet) or stay reachable (code, tested)?"
+  },
+  {
+   "ep": "EP-038",
+   "key": "RC:rejected-anon",
+   "scenario": "Anon GET rejected listing -> 200 with listingStatus",
+   "test_type": "Functional",
+   "role": "anon",
+   "ownership": "non-owner",
+   "check_level": "Response-content",
+   "preconditions": "rejected fixture",
+   "test_data": "id=rejected fixture",
+   "steps": "GET /listings/{id}",
+   "expected_status": 200,
+   "response_assertions": "body.listingStatus == 'rejected'",
+   "business_outcome": "Behaviour per code; requirement unspecified",
+   "expected": "200",
+   "expected_source": "Backend code comment service.ts:48, spec :965",
+   "requirement_status": "Unclear",
+   "execution_method": "Schemathesis",
+   "source": "audit scenario 6",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "fixture_state": "rejected"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "listingStatus",
+      "op": "equals",
+      "value": "rejected"
+     }
+    ]
+   },
+   "blocked_reason": "Requirement unclear: sheet says removed not visible; are rejected/inactive removed? Clarify expected result"
+  },
+  {
+   "ep": "EP-038",
+   "key": "RC:inactive-anon",
+   "scenario": "Anon GET inactive listing -> 200 with listingStatus",
+   "test_type": "Functional",
+   "role": "anon",
+   "ownership": "non-owner",
+   "check_level": "Response-content",
+   "preconditions": "inactive fixture",
+   "test_data": "id=inactive fixture",
+   "steps": "GET /listings/{id}",
+   "expected_status": 200,
+   "response_assertions": "body.listingStatus == 'inactive'",
+   "business_outcome": "Behaviour per code; requirement unspecified",
+   "expected": "200",
+   "expected_source": "Backend code comment service.ts:48, spec :965",
+   "requirement_status": "Unclear",
+   "execution_method": "Schemathesis",
+   "source": "audit scenario 6",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "fixture_state": "inactive"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "listingStatus",
+      "op": "equals",
+      "value": "inactive"
+     }
+    ]
+   },
+   "blocked_reason": "Requirement unclear: sheet says removed not visible; are rejected/inactive removed? Clarify expected result"
+  },
+  {
+   "ep": "EP-038",
+   "key": "COV:removed-anon",
+   "scenario": "Anon GET soft-deleted listing -> 404",
+   "test_type": "Business Rule",
+   "role": "anon",
+   "ownership": "non-owner",
+   "check_level": "Status-only",
+   "preconditions": "soft-deleted listing",
+   "test_data": "deletedAt set",
+   "steps": "GET /listings/{id}",
+   "expected_status": 404,
+   "response_assertions": "",
+   "business_outcome": "Removed hidden",
+   "expected": "404",
+   "expected_source": "Backend code repository.ts:693",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "audit scenario 7",
+   "blocked_reason": "No soft-deleted fixture listing exists on QA"
+  },
+  {
+   "ep": "EP-038",
+   "key": "CONF:removed-owner",
+   "scenario": "Owner GET own soft-deleted listing: sheet implies 200, code 404",
+   "test_type": "Business Rule",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Business-rule",
+   "preconditions": "soft-deleted listing owned by ST_USER",
+   "test_data": "owner token",
+   "steps": "GET /listings/{id}",
+   "expected_status": "200 per sheet / 404 per code",
+   "response_assertions": "TBD",
+   "business_outcome": "Removed listing owner visibility",
+   "expected": "Undetermined",
+   "expected_source": "Sheet title vs repository.ts:693",
+   "requirement_status": "Conflict",
+   "execution_method": "Manual",
+   "source": "audit scenario 8 / conflict",
+   "blocked_reason": "Clarify: should owner/admin see a removed listing (sheet) or 404 for all (code)? Also no soft-deleted fixture exists"
+  },
+  {
+   "ep": "EP-038",
+   "key": "BR:cache-status-change",
+   "scenario": "Buyer fetch, seller sets pending_approval, buyer fetch again -> 404",
+   "test_type": "Business Rule",
+   "role": "other",
+   "ownership": "non-owner",
+   "check_level": "Business-rule",
+   "preconditions": "live listing, seller token, buyer token",
+   "test_data": "status change between calls",
+   "steps": "GET, update status, GET again",
+   "expected_status": 404,
+   "response_assertions": "second GET 404",
+   "business_outcome": "Cache must not leak hidden listing",
+   "expected": "404 on second fetch",
+   "expected_source": "Service spec :999, code",
+   "requirement_status": "Assumed",
+   "execution_method": "E2E",
+   "source": "audit scenario 9",
+   "blocked_reason": "Multi-step sequence; needs buyer account (none exists) and a status-update call"
+  },
+  {
+   "ep": "EP-038",
+   "key": "NEG:unknown-id",
+   "scenario": "Unknown id -> 404, never 5xx",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "id=nonexistent-id",
+   "steps": "GET /listings/{id}",
+   "expected_status": 404,
+   "response_assertions": "",
+   "business_outcome": "Graceful not found",
+   "expected": "404",
+   "expected_source": "Backend code service.ts:775 (spec documents no 404)",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit scenario 10",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "literal": "nonexistent-id"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "NEG:malformed-id",
+   "scenario": "Malformed id (%00) -> no 5xx",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "id=%00",
+   "steps": "GET /listings/{id}",
+   "expected_status": 404,
+   "response_assertions": "",
+   "business_outcome": "No server error on odd id",
+   "expected": "404 not 5xx",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit scenario 10",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "literal": "%00"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       400,
+       404
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "NEG:long-id",
+   "scenario": "Very long id (2000 chars) -> no 5xx",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "id='a'*2000",
+   "steps": "GET /listings/{id}",
+   "expected_status": 404,
+   "response_assertions": "",
+   "business_outcome": "No server error",
+   "expected": "404 not 5xx",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit scenario 10",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "literal": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       400,
+       404,
+       414
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "SEC:invalid-token",
+   "scenario": "Garbage Bearer token on live listing treated as anonymous -> 200",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Security",
+   "preconditions": "approved fixture",
+   "test_data": "Authorization: Bearer garbage",
+   "steps": "GET /listings/{id}",
+   "expected_status": 200,
+   "response_assertions": "",
+   "business_outcome": "Optional guard never 401",
+   "expected": "200",
+   "expected_source": "Backend code optional-jwt-auth.guard.ts:14",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "audit scenario 11"
+  },
+  {
+   "ep": "EP-038",
+   "key": "RC:no-offercount",
+   "scenario": "Live listing has no offerCount",
+   "test_type": "Functional",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Response-content",
+   "preconditions": "approved fixture",
+   "test_data": "id=approved fixture",
+   "steps": "GET /listings/{id}",
+   "expected_status": 200,
+   "response_assertions": "body.offerCount absent",
+   "business_outcome": "No offer count exposed",
+   "expected": "field absent",
+   "expected_source": "Service spec :945",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "audit scenario 12",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "fixture_state": "approved"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "offerCount",
+      "op": "absent"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "SEC:unexpected-query",
+   "scenario": "Unexpected query ?status=draft ignored",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Security",
+   "preconditions": "approved fixture",
+   "test_data": "?status=draft",
+   "steps": "GET /listings/{id}?status=draft",
+   "expected_status": 200,
+   "response_assertions": "",
+   "business_outcome": "Unknown params ignored",
+   "expected": "200",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "audit scenario 13"
+  },
+  {
+   "ep": "EP-038",
+   "key": "CT:200-schema",
+   "scenario": "Contract: 200 response conforms to schema",
+   "test_type": "Schema/Contract",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Contract",
+   "preconditions": "approved fixture",
+   "test_data": "id=approved fixture",
+   "steps": "GET /listings/{id}",
+   "expected_status": 200,
+   "response_assertions": "response_schema_conformance",
+   "business_outcome": "Spec conformance",
+   "expected": "conforms",
+   "expected_source": "OpenAPI",
+   "requirement_status": "Unclear",
+   "execution_method": "Schemathesis",
+   "source": "spec gap",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "fixture_state": "approved"
+     }
+    },
+    "assertions": [
+     {
+      "type": "check",
+      "name": "response_schema_conformance"
+     }
+    ]
+   },
+   "blocked_reason": "spec has no response schema for 200 (and no 404 documented)"
+  }
+ ]
+}

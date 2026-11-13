@@ -1,12 +1,14 @@
 <#
 .SYNOPSIS  Run Schemathesis against the Redspur API (QA/test only) and save auditable evidence.
-.EXAMPLE   .\run.ps1 -Mode ep -EP 38 -Role user        # one endpoint as the seller/user account
+.EXAMPLE   .\run.ps1 -Mode ep -EP 38 -Role user        # one endpoint as the buyer account
 .EXAMPLE   .\run.ps1 -Mode ep -EP 171 -Role admin
+.EXAMPLE   .\run.ps1 -Mode ep -EP 33 -Role other        # one endpoint as the seller/second account
 .EXAMPLE   .\run.ps1 -Mode ep -EP 38 -Role anon         # deliberate anonymous run
 .EXAMPLE   .\run.ps1 -Mode read                         # every GET endpoint (needs -Role)
 .EXAMPLE   .\run.ps1 -Mode ep -EP 40 -Role user -DryRun # validate setup, send nothing
 .NOTES
-  * user/admin runs REQUIRE their credentials in .env; they never fall back to anonymous.
+  * user/admin/other runs REQUIRE their credentials in .env; they never fall back to anonymous.
+    user reads ST_BUYER_EMAIL (or ST_USER_EMAIL); other reads ST_SELLER_EMAIL (or ST_USER2_EMAIL).
   * Non-GET endpoints require -AllowWrites (creates/changes data on the target environment).
   * Each run gets a unique RUN ID and folder: results\RUN-<yyyyMMdd-HHmmss>-<EP|mode>-<role>\
     containing evidence.json, run.json (spec version/hash, fixtures, role, errors), spec/fixtures snapshots.
@@ -16,8 +18,9 @@
 param(
   [ValidateSet('fetch','read','ep','full')][string]$Mode = 'read',
   [string]$EP,
-  [ValidateSet('user','admin','anon')][string]$Role = 'user',
+  [ValidateSet('user','admin','other','anon')][string]$Role = 'user',
   [int]$MaxExamples = 25,
+  [string]$RateLimit = '2/s',   # e.g. '30/m' if QA answers 429 (ThrottlerException)
   [int]$Seed = 12345,   # fixed default so runs are repeatable; pass -Seed <n> to vary it on purpose
   [switch]$AllowWrites,
   [string]$EnvFile = '.env',
@@ -30,7 +33,7 @@ Set-Location $root
 function Stop-Run([int]$code, [string]$msg) { Write-Host "STOP: $msg" -ForegroundColor Red; exit $code }
 
 # --- environment: start from a clean slate so a missing credential is really missing ---------------------
-foreach ($k in 'ST_BASE_URL','ST_SPEC_URL','ST_USER_EMAIL','ST_USER_PASSWORD','ST_ADMIN_EMAIL','ST_ADMIN_PASSWORD','ST_RUN_DIR') {
+foreach ($k in 'ST_BASE_URL','ST_SPEC_URL','ST_USER_EMAIL','ST_USER_PASSWORD','ST_BUYER_EMAIL','ST_BUYER_PASSWORD','ST_USER2_EMAIL','ST_USER2_PASSWORD','ST_SELLER_EMAIL','ST_SELLER_PASSWORD','ST_ADMIN_EMAIL','ST_ADMIN_PASSWORD','ST_RUN_DIR') {
   [Environment]::SetEnvironmentVariable($k, $null)
 }
 $envPath = if ([IO.Path]::IsPathRooted($EnvFile)) { $EnvFile } else { Join-Path $root $EnvFile }
@@ -48,7 +51,8 @@ if ($baseHost -match 'prod' -or ($baseHost -notmatch '(^|[.-])(qa|stage|staging|
   Stop-Run 6 "ST_BASE_URL host '$baseHost' is not a recognised QA/test host. Refusing to fuzz it."
 }
 if ($Mode -ne 'fetch') {
-  if ($Role -eq 'user'  -and -not $env:ST_USER_EMAIL)  { Stop-Run 3 "AUTH_MISSING: ST_USER_EMAIL is not set in $EnvFile. Not running anonymously; use -Role anon only if that is intended." }
+  if ($Role -eq 'user'  -and -not $env:ST_BUYER_EMAIL  -and -not $env:ST_USER_EMAIL)  { Stop-Run 3 "AUTH_MISSING: ST_BUYER_EMAIL (or ST_USER_EMAIL) is not set in $EnvFile. Not running anonymously; use -Role anon only if that is intended." }
+  if ($Role -eq 'other' -and -not $env:ST_SELLER_EMAIL -and -not $env:ST_USER2_EMAIL) { Stop-Run 3 "AUTH_MISSING: ST_SELLER_EMAIL (or ST_USER2_EMAIL) is not set in $EnvFile. Not running anonymously; use -Role anon only if that is intended." }
   if ($Role -eq 'admin' -and -not $env:ST_ADMIN_EMAIL) { Stop-Run 3 "AUTH_MISSING: ST_ADMIN_EMAIL is not set in $EnvFile. Not running anonymously; use -Role anon only if that is intended." }
 }
 $env:ST_ROLE = $Role
@@ -60,11 +64,13 @@ $specFile = Join-Path $root 'spec\openapi.json'
 if ($Mode -eq 'fetch') {
   if ($DryRun) { Write-Host "DRYRUN: would download $spec -> $specFile"; exit 0 }
   Invoke-WebRequest $spec -OutFile $specFile -UseBasicParsing
+  & python (Join-Path $root 'pretty_spec.py') $specFile      # readable copy for agents (the original is one 160 KB line)
   Write-Host "Spec saved: $specFile"; exit 0
 }
 if (-not (Test-Path $specFile)) {
   if ($DryRun) { Stop-Run 6 "spec\openapi.json missing - run -Mode fetch first" }
   Invoke-WebRequest $spec -OutFile $specFile -UseBasicParsing
+  & python (Join-Path $root 'pretty_spec.py') $specFile
 }
 
 # --- endpoint resolution ------------------------------------------------------------------------------------
@@ -96,7 +102,7 @@ if (Test-Path $fixtures) {
 }
 
 $args_ = @('-m','schemathesis.cli','run',$runSpec,'--url',$base,
-  '--checks','all','--max-examples',$MaxExamples,'--continue-on-failure','--rate-limit','2/s',
+  '--checks','all','--max-examples',$MaxExamples,'--continue-on-failure','--rate-limit',$RateLimit,
   '--report','junit,html,ndjson','--report-dir',$outDir,
   '--exclude-checks','ignored_auth')   # remove if you WANT auth-bypass probing
 $args_ += @('--seed',$Seed)   # always pinned (0 is a valid seed too)

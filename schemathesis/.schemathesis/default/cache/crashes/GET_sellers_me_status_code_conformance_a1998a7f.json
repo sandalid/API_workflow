@@ -1,0 +1,87 @@
+{
+  "operation": "GET /sellers/me",
+  "method": "GET",
+  "path_template": "/sellers/me",
+  "fingerprint": "a1998a7f",
+  "case_id": "kl9cRT",
+  "code_sample": "curl -X GET -H 'Authorization: [Filtered]' https://api-qa.redspur.com/api/sellers/me",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "https://api-qa.redspur.com/api/sellers/me",
+      "url_template": "https://api-qa.redspur.com/api/sellers/me",
+      "headers": {
+        "User-Agent": "schemathesis/4.32.7",
+        "Accept-Encoding": "gzip, deflate, zstd",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "Authorization": "[Filtered]",
+        "X-Schemathesis-TestCaseId": "kl9cRT"
+      },
+      "response": {
+        "status_code": 403,
+        "headers": {
+          "server": "nginx/1.28.3 (Ubuntu)",
+          "date": "Mon, 09 Nov 2026 14:58:59 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "92",
+          "connection": "keep-alive",
+          "x-powered-by": "Express",
+          "vary": "Origin",
+          "access-control-allow-credentials": "[Filtered]",
+          "x-ratelimit-limit": "100",
+          "x-ratelimit-remaining": "96",
+          "x-ratelimit-reset": "44",
+          "etag": "W/\"5c-lL9DQKK/Ar5C+b4L6O4xELbILaA\""
+        },
+        "body": "{\"success\":false,\"statusCode\":403,\"message\":\"Insufficient permissions.\",\"error\":\"Forbidden\"}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented status code\n\nReceived: 403\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 1.3500000022759195e-05,
+          "mode": "positive"
+        },
+        "components": {},
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Default positive test case",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "scenario": "default_positive_test"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "constants_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/sellers/me",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {
+        "Authorization": "[Filtered]"
+      },
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null,
+      "auth_identity": null,
+      "operation": "GET /sellers/me"
+    }
+  ]
+}

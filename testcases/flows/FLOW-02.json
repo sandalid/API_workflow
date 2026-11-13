@@ -16,7 +16,17 @@
    "automation": "Schemathesis",
    "notes": "Step order inferred: GET /categories (EP-033, no step number set) conceptually precedes GET /brands on these browse screens; call sites: screens/guest/Explore.tsx:101, screens/guest/BrandListing.tsx:40. Prior EP-033 step in this flow left untouched.",
    "result": "NOT RUN"
+  },
+  {
+   "ep": "EP-033",
+   "key": "EP-033",
+   "step": 1,
+   "endpoints": "EP-033",
+   "data": "No fixtures required (zero params, zero auth)",
+   "expected": "200, array of categories; guest Explore/CategoryBrowse renders category tiles before the brand taster rail (step 2, EP-032)",
+   "linked_tcs": "TC-033-001, TC-033-002, TC-033-003, TC-033-004, TC-033-005, TC-033-006, TC-033-007, TC-033-008, TC-033-009, TC-033-010, TC-033-011, TC-033-012, TC-033-013, TC-033-014, TC-033-015, TC-033-016, TC-033-017, TC-033-018, TC-033-019, TC-033-020",
+   "result": "NOT RUN"
   }
  ],
- "updated": "2026-11-09"
+ "updated": "2026-11-13"
 }

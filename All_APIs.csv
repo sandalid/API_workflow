@@ -58,8 +58,8 @@ Auth,EP-023,POST,/auth/reset-password,,NO,No mobile screen calls it - test-only,
 Auth,EP-019,POST,/auth/signup,Register a new user account,NO,No mobile screen calls it - test-only,YES,NO,
 Auth,EP-030,POST,/auth/verify-current-password,Verify the current password of the authenticated user,YES,Flow 7,YES,NO,
 Auth,EP-022,POST,/auth/verify-otp,Auth Controller verify Otp  - Reject an OTP code that has already been consumed once (single-use enforcement) and one that has expired.,NO,"Legacy, superseded by /auth/otp/verify",YES,NO,
-Categories,EP-032,GET,/brands,Brands Controller find All,YES,"Flow 2, 6",YES,NO,Manually Executed
-Brands,EP-033,GET,/categories,"Categories Controller find All -  Verify the category tree correctly reflects only categories intended to be customer-facing, per taxonomy rules confirmed with BA.",YES,"Flow 1, 2, 6",YES,NO,Manually Executed
+Brands,EP-032,GET,/brands,Brands Controller find All,YES,"Flow 2, 6",YES,NO,Manually Executed
+Categories,EP-033,GET,/categories,"Categories Controller find All -  Verify the category tree correctly reflects only categories intended to be customer-facing, per taxonomy rules confirmed with BA.",YES,"Flow 1, 2, 6",YES,NO,Manually Executed
 Checkout,EP-083,POST,/checkout/preview,Orders Controller checkout Preview -  Verify the computed total (subtotal + shipping + platform fee - discount) matches the pricing rules confirmed with Dev/BA exactly.,NO,No promo-code UI entry point - dead code,YES,NO,
 Messaging,EP-187,POST,/conversations,Messaging Controller create Conversation -  Verify a user cannot start a new conversation with a user who has blocked them.,YES,Flow 21,YES,NO,
 Messaging,EP-189,DELETE,/conversations/:id,Messaging Controller delete Conversation -  Verify deleting a conversation on one side is a per-user soft-delete - it does not delete the conversation for the other participant.,YES,Flow 21,YES,NO,

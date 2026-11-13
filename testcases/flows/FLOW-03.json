@@ -8,12 +8,12 @@
    "endpoints": "EP-038",
    "action": "GET /listings/{id} - product detail (ProductDetail.tsx:259,278); guest or logged-in",
    "role": "anon",
-   "linked_tcs": "TC-038-001, TC-038-002, TC-038-003, TC-038-004, TC-038-005, TC-038-006, TC-038-007, TC-038-008, TC-038-009, TC-038-010, TC-038-011, TC-038-012, TC-038-013, TC-038-014, TC-038-015, TC-038-016, TC-038-017, TC-038-018, TC-038-019, TC-038-020, TC-038-021, TC-038-022, TC-038-023, TC-038-024, TC-038-025, TC-038-037, TC-038-038, TC-038-039, TC-038-040, TC-038-041, TC-038-042, TC-038-043, TC-038-044, TC-038-045, TC-038-046, TC-038-047, TC-038-048, TC-038-049, TC-038-055, TC-038-056, TC-038-057, TC-038-058",
+   "linked_tcs": "TC-038-001, TC-038-002, TC-038-003, TC-038-004, TC-038-005, TC-038-006, TC-038-007, TC-038-008, TC-038-009, TC-038-010, TC-038-011, TC-038-012, TC-038-013, TC-038-014, TC-038-015, TC-038-016, TC-038-017, TC-038-018, TC-038-019, TC-038-020, TC-038-021, TC-038-022, TC-038-023, TC-038-024, TC-038-025, TC-038-026, TC-038-027, TC-038-028, TC-038-029, TC-038-030, TC-038-031, TC-038-032, TC-038-033, TC-038-034, TC-038-035, TC-038-036, TC-038-037, TC-038-038, TC-038-039, TC-038-040, TC-038-041, TC-038-042, TC-038-043, TC-038-044, TC-038-045, TC-038-046, TC-038-047, TC-038-048, TC-038-049, TC-038-050, TC-038-051, TC-038-052, TC-038-053, TC-038-054, TC-038-055, TC-038-056, TC-038-057, TC-038-058, TC-038-059, TC-038-060, TC-038-061, TC-038-062, TC-038-063, TC-038-064, TC-038-065, TC-038-066, TC-038-067",
    "automation": "Schemathesis",
    "result": "NOT RUN",
    "evidence": "schemathesis\\results\\2026-11-09_1115/1116/1118_EP-038_{user,admin,anon}",
    "bug_id": "BUG-EP038-01, BUG-EP038-02, BUG-EP038-03, BUG-EP038-04",
-   "notes": "Mobile guest and user. App-read fields: negotiable, minOfferPercent, attributes, seller{}. Draft/inactive also open to guest (BUG-EP038-03). Reconciled against regenerated audit 2026-11-09: added TC-038-055..058 (reserved-state gap, offerCount-absent, foreign-type-id, unexpected query params).",
+   "notes": "Mobile guest and user. App-read fields: negotiable, minOfferPercent, attributes, seller{}. Draft/inactive also open to guest (BUG-EP038-03). Reconciled against regenerated audit 2026-11-09: added TC-038-055..058 (reserved-state gap, offerCount-absent, foreign-type-id, unexpected query params). Re-reconciled 2026-11-12: added TC-038-059..067 (ungated-states confirmed-vs-conflict split, soft-deleted owner/admin confirmed + owner sheet-literal, reserved owner/admin, cache-restale-to-pending, spec security-gap); linked_tcs resynced to the full TC-038-001..067 set (closing a gap that had omitted the AUD:/SPEC:/some COV: rows).",
    "flow_name": "Buyer browses a listing and opens product detail",
    "step": 1,
    "data": "fixtures active/approved/sold ids; optional Bearer token",
@@ -147,5 +147,5 @@
    "flow_name": "Buyer browses a listing and opens product detail"
   }
  ],
- "updated": "2026-11-09"
+ "updated": "2026-11-12"
 }

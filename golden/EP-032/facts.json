@@ -1,0 +1,99 @@
+{
+ "ep": "EP-032",
+ "curation": "auto-skeleton: NOT reviewed by a human - add must_mention / must_not_claim before approving",
+ "audit": {
+  "required_sections": [
+   "## Findings",
+   "## Test design inputs",
+   "## Source agreement matrix",
+   "## Suggested test scenarios"
+  ],
+  "must_mention": [],
+  "must_not_claim": [],
+  "must_cite": [
+   {
+    "id": "brands.service.ts:findById",
+    "file": "brands.service.ts",
+    "lines": [
+     12,
+     18
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "brands.repository.ts:orderBy",
+    "file": "brands.repository.ts",
+    "lines": [
+     12,
+     23
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "listing.constants.ts:LIVE_LISTING_WHERE",
+    "file": "listing.constants.ts",
+    "lines": [
+     68,
+     92
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "app.module.ts:ThrottlerGuard",
+    "file": "app.module.ts",
+    "lines": [
+     59,
+     59
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "visual-classification.service.ts:findNavigationTabBrands",
+    "file": "visual-classification.service.ts",
+    "lines": [
+     295,
+     295
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "domain.ts:Brand",
+    "file": "domain.ts",
+    "lines": [
+     26,
+     30
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "brandsApi.ts:RawBrand",
+    "file": "brandsApi.ts",
+    "lines": [
+     4,
+     15
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "brands.repository.ts:brand",
+    "file": "brands.repository.ts",
+    "lines": [
+     22,
+     22
+    ],
+    "tolerance": 15
+   }
+  ],
+  "baseline_citations": {
+   "total": 68,
+   "FAIL": 2,
+   "WARN": 2
+  }
+ },
+ "design": {
+  "required_dimensions": [],
+  "required_checks": [],
+  "min_cases": 9,
+  "max_cases": 48
+ }
+}

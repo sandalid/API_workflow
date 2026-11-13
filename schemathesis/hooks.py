@@ -1,8 +1,12 @@
 """Schemathesis hooks: Bearer auth for the role under test.
 
-Roles (ST_ROLE): user | admin | anon.
-  user / admin  -> the matching account is REQUIRED. Missing credentials or a failed login raise an
-                   error; the run never silently falls back to anonymous.
+Roles (ST_ROLE): user | admin | other | anon.
+  user / admin / other  -> the matching account is REQUIRED. Missing credentials or a failed login
+                   raise an error; the run never silently falls back to anonymous.
+                   user   reads ST_BUYER_EMAIL  (falls back to ST_USER_EMAIL)
+                   other  reads ST_SELLER_EMAIL (falls back to ST_USER2_EMAIL) - a second,
+                          non-owner account for ownership/cross-account cases
+                   admin  reads ST_ADMIN_EMAIL
   anon          -> explicit, deliberate no-auth run.
 
 Login: password (/auth/login) when ST_<ROLE>_PASSWORD is set, otherwise OTP:
@@ -45,8 +49,17 @@ def _record(status, method=None, error=None):
 
 
 def _creds():
-    prefix = "ST_ADMIN" if ROLE == "admin" else "ST_USER"
-    return os.environ.get(f"{prefix}_EMAIL") or None, os.environ.get(f"{prefix}_PASSWORD") or None
+    if ROLE == "admin":
+        candidates = ["ST_ADMIN"]
+    elif ROLE == "other":
+        candidates = ["ST_SELLER", "ST_USER2"]
+    else:
+        candidates = ["ST_BUYER", "ST_USER"]
+    for prefix in candidates:
+        email = os.environ.get(f"{prefix}_EMAIL")
+        if email:
+            return email, os.environ.get(f"{prefix}_PASSWORD") or None
+    return None, None
 
 
 def _call(method, url, **kw):
@@ -98,13 +111,15 @@ class RoleAuth:
         if ROLE == "anon":
             _record("anonymous-explicit")
             return None
-        if ROLE not in ("user", "admin"):
+        if ROLE not in ("user", "admin", "other"):
             _record("failed", error=f"unknown role {ROLE!r}")
-            raise AuthError(f"unknown ST_ROLE {ROLE!r} (use user|admin|anon)")
+            raise AuthError(f"unknown ST_ROLE {ROLE!r} (use user|admin|other|anon)")
         email, pw = _creds()
         if not email:
             _record("failed", error="credentials missing")
-            raise AuthError(f"AUTH_MISSING: ST_{ROLE.upper()}_EMAIL is not set; refusing to run anonymously. "
+            want = {"user": "ST_BUYER_EMAIL (or ST_USER_EMAIL)", "other": "ST_SELLER_EMAIL (or ST_USER2_EMAIL)",
+                    "admin": "ST_ADMIN_EMAIL"}[ROLE]
+            raise AuthError(f"AUTH_MISSING: {want} is not set; refusing to run anonymously. "
                             "Use -Role anon only if an anonymous run is intended.")
         try:
             token = password_login(email, pw) if pw else otp_login(email)

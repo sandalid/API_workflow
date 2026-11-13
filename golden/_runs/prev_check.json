@@ -1,0 +1,25 @@
+{
+ "at": "2026-11-12T21:04:09",
+ "prompts": {
+  ".claude/agents/case-design-reviewer.md": "1fa9f59ea667b5a8",
+  ".claude/agents/endpoint-usage-auditor.md": "a2a540c4cac45a0c",
+  ".claude/agents/schemathesis-triager.md": "15b1b20fe9c83b8c",
+  ".claude/agents/testcase-workbook-keeper.md": "1539a9767c1f320f",
+  ".claude/commands/audit-endpoint.md": "83d1808b47018956",
+  ".claude/commands/golden-check.md": "b5c6def3d010e5d1",
+  ".claude/commands/test-endpoint.md": "97a5c8e645d35f8f"
+ },
+ "results": {
+  "EP-109": {
+   "status": "FAIL",
+   "golden_status": "candidate",
+   "issues": [
+    "[agent output] audit does not cite jwt-auth.guard.ts near lines 11-25 (jwt-auth.guard.ts:handleRequest)",
+    "[agent output] audit does not cite sellers.service.ts near lines 1253-1285 (sellers.service.ts:getAllSellers)",
+    "[agent output] audit does not cite sellers.service.ts near lines 1294-1330 (sellers.service.ts:getSellerByIdForAdmin)",
+    "[agent output] audit does not cite admin.service.ts near lines 382-388 (admin.service.ts:suspendUser)",
+    "[agent output] audit does not cite schema.prisma near lines 328-328 (schema.prisma:isSeller)"
+   ]
+  }
+ }
+}

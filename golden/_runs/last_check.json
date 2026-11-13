@@ -1,0 +1,27 @@
+{
+ "at": "2026-11-12T21:05:45",
+ "prompts": {
+  ".claude/agents/case-design-reviewer.md": "1fa9f59ea667b5a8",
+  ".claude/agents/endpoint-usage-auditor.md": "a2a540c4cac45a0c",
+  ".claude/agents/schemathesis-triager.md": "15b1b20fe9c83b8c",
+  ".claude/agents/testcase-workbook-keeper.md": "1539a9767c1f320f",
+  ".claude/commands/audit-endpoint.md": "83d1808b47018956",
+  ".claude/commands/golden-check.md": "b5c6def3d010e5d1",
+  ".claude/commands/test-endpoint.md": "97a5c8e645d35f8f"
+ },
+ "results": {
+  "EP-038": {
+   "status": "FAIL",
+   "golden_status": "candidate",
+   "issues": [
+    "[agent output] audit does not state: no-removed-status - there is no 'removed' status in the domain",
+    "[agent output] audit does not state: offers-flow-call-sites - call sites the sheet's Usage Note does not list",
+    "[agent output] audit does not state: sheet-mismatch - the sheet's behavioural claim does not match the implementation",
+    "[agent output] audit does not cite optional-jwt-auth.guard.ts near lines 1-17 (optional-jwt-auth.guard.ts:OptionalJwtAuthGuard)",
+    "[agent output] design misses 11 required scenario(s): user/active->[200], user/approved->[200], user/sold->[200], admin/active->[200], admin/approved->[200], admin/sold->[200], admin/draft->[200], user/inactive->[200] ...",
+    "[agent output] design has no case with the required check: trace-405-needs-allow-header",
+    "[agent output] design has no case with the required check: spec-documents-404"
+   ]
+  }
+ }
+}

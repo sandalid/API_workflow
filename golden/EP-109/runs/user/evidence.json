@@ -1,0 +1,626 @@
+{
+ "run_id": "RUN-20261109-202832-EP-109-user",
+ "schema_version": 1,
+ "interactions": [
+  {
+   "id": "a6UFvQ",
+   "phase": "coverage",
+   "operation": "GET /sellers/me",
+   "method": "TRACE",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "negative",
+   "scenario": "Unspecified HTTP method: TRACE",
+   "response": {
+    "status": 405,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-type": "text/html",
+     "content-length": "166",
+     "connection": "close"
+    },
+    "elapsed": 0.758764,
+    "body": {
+     "text": "<html>\r\n<head><title>405 Not Allowed</title></head>\r\n<body>\r\n<center><h1>405 Not Allowed</h1></center>\r\n<hr><center>nginx/1.28.3 (Ubuntu)</center>\r\n</body>\r\n</html>\r\n",
+     "json": null,
+     "truncated": false,
+     "size": 166
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "failure",
+     "code": "ST204",
+     "message": "TRACE returned 405 without required `Allow` header Add `Allow` header listing supported methods (required by RFC 9110)"
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "user"
+  },
+  {
+   "id": "Lkv9Aq",
+   "phase": "coverage",
+   "operation": "GET /sellers/me",
+   "method": "QUERY",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "negative",
+   "scenario": "Unspecified HTTP method: QUERY",
+   "response": {
+    "status": 404,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-type": "application/json; charset=utf-8",
+     "content-length": "91",
+     "connection": "keep-alive",
+     "x-powered-by": "Express",
+     "vary": "Origin",
+     "access-control-allow-credentials": "[Filtered]",
+     "etag": "W/\"5b-r4UrW8QgFTE6BlOTb1ex5A6kGnA\""
+    },
+    "elapsed": 0.887024,
+    "body": {
+     "text": "{\"success\":false,\"statusCode\":404,\"message\":\"Cannot QUERY /sellers/me\",\"error\":\"Not Found\"}",
+     "json": {
+      "success": false,
+      "statusCode": 404,
+      "message": "Cannot QUERY /sellers/me",
+      "error": "Not Found"
+     },
+     "truncated": false,
+     "size": 91
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "failure",
+     "code": "ST204",
+     "message": "Unsupported method QUERY returned 404, expected 405 Method Not Allowed Return 405 for methods not listed in the OpenAPI spec"
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "user"
+  },
+  {
+   "id": "Ap9Gfx",
+   "phase": "coverage",
+   "operation": "GET /sellers/me",
+   "method": "OPTIONS",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "negative",
+   "scenario": "Unspecified HTTP method: OPTIONS",
+   "response": {
+    "status": 204,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-length": "0",
+     "connection": "keep-alive",
+     "x-powered-by": "Express",
+     "vary": "Origin, Access-Control-Request-Headers",
+     "access-control-allow-credentials": "[Filtered]",
+     "access-control-allow-methods": "GET,HEAD,PUT,PATCH,POST,DELETE"
+    },
+    "elapsed": 0.27278,
+    "body": {
+     "text": "",
+     "json": null,
+     "truncated": false,
+     "size": 0
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "user"
+  },
+  {
+   "id": "GI6z0E",
+   "phase": "coverage",
+   "operation": "GET /sellers/me",
+   "method": "GET",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "positive",
+   "scenario": "Default positive test case",
+   "response": {
+    "status": 200,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-type": "application/json; charset=utf-8",
+     "content-length": "355",
+     "connection": "keep-alive",
+     "x-powered-by": "Express",
+     "vary": "Origin",
+     "access-control-allow-credentials": "[Filtered]",
+     "x-ratelimit-limit": "100",
+     "x-ratelimit-remaining": "99",
+     "x-ratelimit-reset": "60",
+     "etag": "W/\"163-s15lNudUZ1ZsuGH73fZcRKDhIgM\""
+    },
+    "elapsed": 0.288625,
+    "body": {
+     "text": "{\"shopName\":\"Redspur QA Seller 8's Shop (redspurauto8)\",\"shopTagline\":null,\"shopLogo\":null,\"phoneNumber\":\"+12264550694\",\"sellerCategories\":[],\"addressLine1\":\"123 Main St\",\"city\":\"San Francisco\",\"state\":\"CA\",\"zip\":\"94103\",\"country\":\"US\",\"sellerType\":null,\"legalName\":null,\"taxIdLast4\":null,\"notifyFollowersOnNewListing\":false,\"payout\":null,\"isSeller\":true}",
+     "json": {
+      "shopName": "Redspur QA Seller 8's Shop (redspurauto8)",
+      "shopTagline": null,
+      "shopLogo": null,
+      "phoneNumber": "+12264550694",
+      "sellerCategories": [],
+      "addressLine1": "123 Main St",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94103",
+      "country": "US",
+      "sellerType": null,
+      "legalName": null,
+      "taxIdLast4": null,
+      "notifyFollowersOnNewListing": false,
+      "payout": null,
+      "isSeller": true
+     },
+     "truncated": false,
+     "size": 355
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "status_code_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "content_type_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "response_headers_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "response_schema_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "negative_data_rejection",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "positive_data_acceptance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "use_after_free",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "ensure_resource_availability",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "user"
+  },
+  {
+   "id": "n7KQhf",
+   "phase": "coverage",
+   "operation": "GET /sellers/me",
+   "method": "GET",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization",
+    "content-type"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "negative",
+   "scenario": "Malformed Content-Type: multipart/form-data without boundary",
+   "response": {
+    "status": 200,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-type": "application/json; charset=utf-8",
+     "content-length": "355",
+     "connection": "keep-alive",
+     "x-powered-by": "Express",
+     "vary": "Origin",
+     "access-control-allow-credentials": "[Filtered]",
+     "x-ratelimit-limit": "100",
+     "x-ratelimit-remaining": "98",
+     "x-ratelimit-reset": "59",
+     "etag": "W/\"163-s15lNudUZ1ZsuGH73fZcRKDhIgM\""
+    },
+    "elapsed": 0.293421,
+    "body": {
+     "text": "{\"shopName\":\"Redspur QA Seller 8's Shop (redspurauto8)\",\"shopTagline\":null,\"shopLogo\":null,\"phoneNumber\":\"+12264550694\",\"sellerCategories\":[],\"addressLine1\":\"123 Main St\",\"city\":\"San Francisco\",\"state\":\"CA\",\"zip\":\"94103\",\"country\":\"US\",\"sellerType\":null,\"legalName\":null,\"taxIdLast4\":null,\"notifyFollowersOnNewListing\":false,\"payout\":null,\"isSeller\":true}",
+     "json": {
+      "shopName": "Redspur QA Seller 8's Shop (redspurauto8)",
+      "shopTagline": null,
+      "shopLogo": null,
+      "phoneNumber": "+12264550694",
+      "sellerCategories": [],
+      "addressLine1": "123 Main St",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94103",
+      "country": "US",
+      "sellerType": null,
+      "legalName": null,
+      "taxIdLast4": null,
+      "notifyFollowersOnNewListing": false,
+      "payout": null,
+      "isSeller": true
+     },
+     "truncated": false,
+     "size": 355
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "user"
+  },
+  {
+   "id": "CZ24nl",
+   "phase": "fuzzing",
+   "operation": "GET /sellers/me",
+   "method": "GET",
+   "path_template": "/sellers/me",
+   "path_params": {},
+   "query": {},
+   "uri": "https://api-qa.redspur.com/api/sellers/me",
+   "request_header_names": [
+    "authorization"
+   ],
+   "has_auth": true,
+   "request_body": null,
+   "generation_mode": "positive",
+   "scenario": "Positive test case",
+   "response": {
+    "status": 200,
+    "headers": {
+     "server": "nginx/1.28.3 (Ubuntu)",
+     "content-type": "application/json; charset=utf-8",
+     "content-length": "355",
+     "connection": "keep-alive",
+     "x-powered-by": "Express",
+     "vary": "Origin",
+     "access-control-allow-credentials": "[Filtered]",
+     "x-ratelimit-limit": "100",
+     "x-ratelimit-remaining": "97",
+     "x-ratelimit-reset": "58",
+     "etag": "W/\"163-s15lNudUZ1ZsuGH73fZcRKDhIgM\""
+    },
+    "elapsed": 0.806751,
+    "body": {
+     "text": "{\"shopName\":\"Redspur QA Seller 8's Shop (redspurauto8)\",\"shopTagline\":null,\"shopLogo\":null,\"phoneNumber\":\"+12264550694\",\"sellerCategories\":[],\"addressLine1\":\"123 Main St\",\"city\":\"San Francisco\",\"state\":\"CA\",\"zip\":\"94103\",\"country\":\"US\",\"sellerType\":null,\"legalName\":null,\"taxIdLast4\":null,\"notifyFollowersOnNewListing\":false,\"payout\":null,\"isSeller\":true}",
+     "json": {
+      "shopName": "Redspur QA Seller 8's Shop (redspurauto8)",
+      "shopTagline": null,
+      "shopLogo": null,
+      "phoneNumber": "+12264550694",
+      "sellerCategories": [],
+      "addressLine1": "123 Main St",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94103",
+      "country": "US",
+      "sellerType": null,
+      "legalName": null,
+      "taxIdLast4": null,
+      "notifyFollowersOnNewListing": false,
+      "payout": null,
+      "isSeller": true
+     },
+     "truncated": false,
+     "size": 355
+    }
+   },
+   "checks": [
+    {
+     "name": "not_a_server_error",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "status_code_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "content_type_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "response_headers_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "response_schema_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "negative_data_rejection",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "positive_data_acceptance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "missing_required_header",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "unsupported_method",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "allow_header_conformance",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "use_after_free",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "ensure_resource_availability",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "object_level_authorization",
+     "status": "success",
+     "code": null,
+     "message": null
+    },
+    {
+     "name": "max_response_time",
+     "status": "success",
+     "code": null,
+     "message": null
+    }
+   ],
+   "error": null,
+   "role": "user"
+  }
+ ],
+ "execution_errors": []
+}

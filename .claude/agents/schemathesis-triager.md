@@ -15,6 +15,13 @@ execution errors; evidence.json = every request/response/check; results_detail.c
 the usage audit audits\EP-NNN.md (incl. Source agreement matrix); reports\EP-NNN\ from earlier runs if present.
 Backend repo: D:\Redspur_Backend\redspur-droplight (apps\api) for locating causes.
 
+NUMBERS (a common source of errors): you cannot run commands, so the caller gives you the output of
+`python tools\verify_claims.py --tally EP-NNN` (workbook counts and failing requests per role and check code, latest run per
+role, with rate-limited/unreadable runs flagged). EVERY count you write (cases, PASS/FAIL, occurrences of a check code per
+role, requests) must be copied from that output. Never count rows or occurrences yourself; if a number you want is not in the
+tally, write "not in the tally" instead of estimating. Quote TC ids, run ids and bug ids exactly - a script checks that they exist.
+A run flagged as rate-limited (HTTP 429) or unreadable is not valid evidence: say so and do not draw conclusions from it.
+
 STEP 1 - Evidence integrity
 - For every run: role, auth status (ok / anonymous-explicit / failed), manifest status, execution errors, spec version/hash,
   fixtures used. Authentication failure or execution errors = evidence incomplete: say which cases are affected.

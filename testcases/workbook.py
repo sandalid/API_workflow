@@ -2,10 +2,15 @@
 
   python workbook.py init [--force]       build a NEW workbook from All_APIs.csv (refuses to overwrite)
   python workbook.py migrate              upgrade an existing workbook in place (backup first, idempotent)
-  python workbook.py upsert design.json   DESIGN step: add cases / flow steps. Existing rows are never
+  python workbook.py upsert design.json [--dry-run]
+                                          DESIGN step: add cases / flow steps. Existing rows are never
                                           overwritten: only EMPTY cells are filled, results are untouched.
+                                          --dry-run validates and reports without saving anything.
   python workbook.py apply-results v.json RESULT step: apply verdicts produced by evidence.py (results, run log,
                                           result history, new evidence-backed cases). The only way a result changes.
+  python workbook.py correct fixes.json [--dry-run]
+                                          CORRECT step: edit labels/wording/match of EXISTING cases (never results/ids),
+                                          logged in Result History + reports/EP-NNN/results-history.md.
   python workbook.py conflict c.json      record requirement/spec/code conflicts; optionally BLOCK affected cases
   python workbook.py cases EP-038 [--full]  list an endpoint's cases as JSON
   python workbook.py roles EP-038         roles needed by the endpoint's Schemathesis-executable cases
@@ -26,25 +31,29 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CSV = os.environ.get("ALL_APIS_CSV") or os.path.join(HERE, "..", "All_APIs.csv")
 XLSX = os.environ.get("WORKBOOK_PATH") or os.path.join(HERE, "Redspur_API_TestCases.xlsx")
 FLOWS_DIR = os.environ.get("FLOWS_DIR") or os.path.join(HERE, "flows")
+_DEFAULT_XLSX = not os.environ.get("WORKBOOK_PATH")
+REPORTS_DIR = os.environ.get("REPORTS_DIR") or (os.path.join(HERE, "..", "reports") if _DEFAULT_XLSX
+                                                else os.path.join(os.path.dirname(XLSX), "reports"))
 MAXROW = 3000
 S_RUNLOG, S_HISTORY, S_CONFLICTS, S_E2E = "Run Log", "Result History", "Conflicts", "E2E Flows"
 
 # ---- column model (field -> header). Existing 20 columns keep their positions; new ones are appended. -----
-CASE_COLS = [("Key", 3), ("TC ID", 14), ("Endpoint ID", 11), ("Method", 8), ("Path", 28), ("Endpoint Title (sheet)", 34),
-             ("Test Type", 15), ("Scenario", 38), ("Role", 8), ("Preconditions / Fixtures", 30), ("Steps / Request", 40),
-             ("Expected Result", 38), ("Actual Result", 38), ("Source", 24), ("Automation", 13), ("Last Result", 11),
-             ("Last Run", 11), ("Run Evidence", 34), ("Bug ID", 14), ("Notes", 34),
-             # --- v2 columns (appended) ---
-             ("Check Level", 15), ("Ownership", 11), ("Test Data", 28), ("Expected Status", 11),
-             ("Response Assertions", 36), ("Business Outcome", 30), ("Expected Source", 16), ("Execution Method", 13),
-             ("Requirement Status", 13), ("Unchecked / Remaining", 34), ("Run ID", 24), ("Previous Result", 11),
-             ("Previous Run ID", 24), ("Match Spec (JSON)", 40)]
-CASE_F = ["key", "tc_id", "ep", "method", "path", "title", "test_type", "scenario", "role", "preconditions", "steps",
-          "expected", "actual", "source", "automation", "result", "run_date", "evidence", "bug_id", "notes",
-          "check_level", "ownership", "test_data", "expected_status", "response_assertions", "business_outcome",
-          "expected_source", "execution_method", "requirement_status", "unchecked", "run_id", "previous_result",
-          "previous_run_id", "match"]
-V2_START = 20
+CASE_COLS = [("Key", 3), ("TC ID", 14), ("Endpoint ID", 11), ("Method", 8), ("Path", 28), ("Test scenario", 38),
+             ("Auth state (Guest / buyer / seller)", 12), ("Request headers", 28), ("Request params / body", 40),
+             ("Expected status", 11), ("Expected response", 38), ("Actual status", 11), ("Actual response", 40),
+             ("Source", 24), ("Automation", 13), ("Last Result", 11), ("Last Run", 11), ("Run Evidence", 34),
+             ("Bug ID", 14), ("Notes", 34), ("Check Level", 15), ("Execution Method", 13),
+             # --- internal columns (hidden; used by design/evidence matching, unhide in Excel if needed) ---
+             ("Endpoint Title (sheet)", 34), ("Test Type", 15), ("Preconditions / Fixtures", 30), ("Steps / Request", 40),
+             ("Ownership", 11), ("Test Data", 28), ("Response Assertions", 36), ("Business Outcome", 30),
+             ("Expected Source", 16), ("Requirement Status", 13), ("Unchecked / Remaining", 34), ("Run ID", 24),
+             ("Match Spec (JSON)", 40)]
+CASE_F = ["key", "tc_id", "ep", "method", "path", "scenario", "role", "req_headers", "req_body", "expected_status",
+          "expected", "actual_status", "actual_response", "source", "automation", "result", "run_date", "evidence",
+          "bug_id", "notes", "check_level", "execution_method",
+          "title", "test_type", "preconditions", "steps", "ownership", "test_data", "response_assertions",
+          "business_outcome", "expected_source", "requirement_status", "unchecked", "run_id", "match"]
+VISIBLE_N = 22          # Key (hidden) + the 21 requested columns; everything after is internal and hidden
 FLOW_COLS = [("Key", 3), ("Flow ID", 10), ("Flow Name", 30), ("Step #", 7), ("Endpoint ID(s)", 22), ("Action / Request", 40),
              ("Role", 8), ("Test Data / Fixtures", 28), ("Expected Result", 38), ("Linked TC IDs", 22), ("Automation", 13),
              ("Last Result", 11), ("Last Run", 11), ("Run Evidence", 30), ("Bug ID", 14), ("Notes", 34)]
@@ -60,13 +69,13 @@ CONF_COLS = ["Conflict ID", "Endpoint ID", "Topic", "Requirement / Sheet says (s
              "Code does (file:line)", "Affected TC IDs", "Status", "Decision / Resolution", "Raised", "Resolved"]
 LISTS = {"test_type": "Schemathesis,Functional,Business Rule,Negative,Security/Auth,Schema/Contract,Audit-derived",
          "role": "anon,user,admin,other", "automation": "Schemathesis,Postman,Playwright,Manual",
-         "result": "PASS,FAIL,BLOCKED,SKIPPED,NOT RUN", "previous_result": "PASS,FAIL,BLOCKED,SKIPPED,NOT RUN",
+         "result": "PASS,FAIL,BLOCKED,SKIPPED,NOT RUN",
          "check_level": "Status-only,Response-content,Business-rule,Contract,Security",
          "ownership": "owner,non-owner,n/a",
          "expected_source": "Requirement,OpenAPI spec,Backend code,Existing test,Documentation,QA suggestion,Product decision",
          "execution_method": "Schemathesis,Playwright,Postman,Manual,E2E",
          "requirement_status": "Confirmed,Assumed,Conflict,Unclear"}
-RESULT_FAMILY = {"result", "run_date", "evidence", "actual", "run_id", "previous_result", "previous_run_id", "bug_id"}
+RESULT_FAMILY = {"result", "run_date", "evidence", "actual_status", "actual_response", "run_id", "bug_id"}
 STATIC = {"key", "tc_id", "ep", "method", "path", "title"}
 FONT = "Arial"
 NORM = Font(name=FONT, size=9)
@@ -84,7 +93,7 @@ def today(): return dt.date.today().isoformat()
 
 
 def read_sheet():
-    rows = list(csv.DictReader(open(CSV, encoding="utf-8-sig")))
+    with open(CSV, encoding="utf-8-sig") as fh: rows = list(csv.DictReader(fh))
     mods = {}
     for r in rows: mods.setdefault(r["Module"], []).append(r)
     for m in mods: mods[m].sort(key=lambda r: ep_num(r["Endpoint ID"]))
@@ -132,6 +141,8 @@ def style_header(ws, cols, case=True):
         c.alignment = Alignment(wrap_text=True, vertical="center"); c.border = BORDER
         ws.column_dimensions[L(i)].width = w
     ws.column_dimensions["A"].hidden = True
+    if case:
+        for i in range(VISIBLE_N + 1, len(cols) + 1): ws.column_dimensions[L(i)].hidden = True
     ws.row_dimensions[1].height = 28
     ws.freeze_panes = "E2" if case else "D2"
     ws.auto_filter.ref = f"A1:{L(len(cols))}{MAXROW}"
@@ -206,10 +217,29 @@ def ensure_aux_sheets(wb):
         ws.freeze_panes = "A2"; ws.auto_filter.ref = f"A1:{L(len(cols))}{MAXROW}"
 
 
+def history_md_path(ep): return os.path.join(REPORTS_DIR, norm_ep(ep), "results-history.md")
+
+
+def history_md(ep, lines):
+    """Previous results live ONLY here (reports/EP-NNN/results-history.md), never as workbook columns."""
+    p = history_md_path(ep); os.makedirs(os.path.dirname(p), exist_ok=True)
+    if not os.path.exists(p):
+        with open(p, "w", encoding="utf-8") as fh:
+            fh.write(f"# {norm_ep(ep)} - results history (previous results)\n\nAppend-only. The workbook shows only the latest result; "
+                     "every change is recorded here.\n\n| When | TC | From | To | Kind | Run | Evidence / note |\n|---|---|---|---|---|---|---|\n")
+    with open(p, "a", encoding="utf-8") as fh: fh.write("\n".join(lines) + "\n")
+
+
+def _cell(x): return str(x if x is not None else "").replace("|", "/").replace("\n", " ")[:300]
+
+
 def add_history(wb, key, tc, ep, frm, to, kind, run_id=None, evidence=None, note=None):
     ws = wb[S_HISTORY]
     ws.append([now(), key, tc, ep, frm, to, kind, run_id, evidence, note])
     for c in ws[ws.max_row]: c.font = NORM; c.alignment = Alignment(wrap_text=True, vertical="top")
+    if ep and kind != "design" and re.match(r"EP-\d+$", str(ep)):
+        history_md(ep, [f"| {now()} | {_cell(tc or key)} | {_cell(frm)} | {_cell(to)} | {_cell(kind)} | {_cell(run_id)} | "
+                        f"{_cell(evidence)} {_cell(note)} |"])
 
 
 # ------------------------------------------------------------------ build / migrate
@@ -275,22 +305,63 @@ def build(force=False):
     print(f"created {XLSX}: {len(mods)} module tabs, {len(rows)} endpoints, {len(flows)} flows")
 
 
+LEGACY = {"Scenario": "scenario", "Role": "role", "Expected Result": "expected", "Actual Result": "_old_actual",
+          "Previous Result": "_prev", "Previous Run ID": "_prev_run"}
+
+
+def _legacy_field(name):
+    if name in LEGACY: return LEGACY[name]
+    for f, h in HEAD.items():
+        if h == name: return f
+    return None
+
+
+def _auth_header(role):
+    return {"anon": "(none - request sent without Authorization)", "user": "Authorization: Bearer <user token>",
+            "admin": "Authorization: Bearer <admin token>", "other": "Authorization: Bearer <non-owner user token>"}.get(role or "")
+
+
+def relayout(ws):
+    """rewrite a module sheet into the current column layout; returns (rows_converted, history_lines_by_ep)"""
+    old = hdr(ws); rows = []
+    for r in range(2, ws.max_row + 1):
+        d = {}
+        for name, col in old.items():
+            f = _legacy_field(name)
+            if f: d[f] = ws.cell(r, col).value
+        if any(v not in (None, "") for v in d.values()): rows.append(d)
+    hist = {}
+    for d in rows:
+        if d.get("tc_id"):
+            if d.get("_prev") or d.get("_old_actual"):
+                hist.setdefault(d["ep"], []).append(
+                    f"| migration {today()} | {d['tc_id']} | {_cell(d.get('_prev'))} | {_cell(d.get('result'))} | old columns | {_cell(d.get('_prev_run'))} | "
+                    f"old 'Actual Result' text: {_cell(d.get('_old_actual'))} |")
+            d["req_headers"] = d.get("req_headers") or _auth_header(d.get("role"))
+            d["req_body"] = d.get("req_body") or d.get("steps")
+    ws.delete_rows(1, ws.max_row)
+    ws.data_validations.dataValidation = []
+    ws.conditional_formatting = type(ws.conditional_formatting)()
+    for cl in list(ws.column_dimensions): ws.column_dimensions[cl].hidden = False
+    style_header(ws, CASE_COLS)
+    for i, d in enumerate(rows, 2):
+        for f, v in d.items():
+            if f in CASE_F and v is not None: ws.cell(i, cc(ws, f)).value = v
+        style_row(ws, i, len(CASE_COLS), placeholder=str(d.get("key", "")).endswith("|placeholder"))
+    add_validation(ws, CASE_F, HEAD); add_result_colors(ws, HEAD)
+    return len(rows), hist
+
+
 def migrate():
     wb = load_workbook(XLSX)
     bk = backup("pre-migrate")
-    added_cols = reset_e2e = 0
+    reset_e2e = converted = 0; all_hist = {}
+    ensure_aux_sheets(wb)
     for ws in module_sheets(wb):
         h = hdr(ws)
-        for name, w in CASE_COLS[V2_START:]:
-            if name in h: continue
-            col = ws.max_column + 1
-            c = ws.cell(1, col, name); c.font = Font(name=FONT, size=9, bold=True, color="FFFFFF"); c.fill = HFILL
-            c.alignment = Alignment(wrap_text=True, vertical="center"); c.border = BORDER
-            ws.column_dimensions[L(col)].width = w; added_cols += 1
-        ws.auto_filter.ref = f"A1:{L(ws.max_column)}{MAXROW}"
-        add_validation(ws, CASE_F, HEAD, only={"check_level", "ownership", "expected_source", "execution_method",
-                                                "requirement_status", "previous_result"})
-    ensure_aux_sheets(wb)
+        if "Previous Result" in h or "Actual status" not in h:
+            n, hist = relayout(ws); converted += n
+            for ep, ls in hist.items(): all_hist.setdefault(ep, []).extend(ls)
     # E2E: results copied from endpoint cases are not E2E executions -> reset to NOT RUN, keep history
     fw = wb[S_E2E]
     for r in range(2, fw.max_row + 1):
@@ -305,13 +376,22 @@ def migrate():
             old = getv(fw, r, "notes", True) or ""
             setv(fw, r, "notes", (old + " | " if old else "") + f"Previous value '{res}' was derived from endpoint cases (not an E2E execution); reset {today()}.", True)
             setv(fw, r, "run_date", None, True); reset_e2e += 1
+    # per-endpoint history md from the Result History tab + the removed Previous Result columns
+    hs = wb[S_HISTORY]
+    for i in range(2, hs.max_row + 1):
+        ep = hs.cell(i, 4).value
+        if ep and re.match(r"EP-\d+$", str(ep)) and hs.cell(i, 7).value != "design":
+            all_hist.setdefault(ep, []).insert(0, "| " + " | ".join(_cell(hs.cell(i, c).value) for c in (1, 3, 5, 6, 7, 8)) +
+                                              f" | {_cell(hs.cell(i, 9).value)} {_cell(hs.cell(i, 10).value)} |")
+    for ep, ls in all_hist.items():
+        if not os.path.exists(history_md_path(ep)): history_md(ep, ls)
     rd = wb["README"]
     if not any("WORKFLOW v2" in str(rd.cell(i, 1).value or "") for i in range(1, rd.max_row + 1)):
         for t, b in README_V2:
             rd.append([t]); c = rd.cell(rd.max_row, 1); c.font = Font(name=FONT, size=10, bold=b); c.alignment = Alignment(wrap_text=True, vertical="top")
     save(wb)
     if reset_e2e: _reset_flow_json()
-    print(f"migrated {XLSX}: +{added_cols} columns, {reset_e2e} E2E results reset to NOT RUN (history kept), backup: {bk}")
+    print(f"migrated {XLSX}: {converted} rows re-laid out, {reset_e2e} E2E results reset, history md for {len(all_hist)} endpoints, backup: {bk}")
 
 
 def _reset_flow_json():
@@ -336,18 +416,23 @@ def validate_case(c):
         errs.append("needs expected / expected_status / response_assertions")
     for f in ("test_type", "role", "check_level", "ownership", "expected_source", "execution_method", "requirement_status"):
         if c.get(f) and f in LISTS and c[f] not in LISTS[f].split(","): errs.append(f"{f}='{c[f]}' not one of {LISTS[f]}")
+    m = c.get("match")
+    if isinstance(m, str):
+        try: m = json.loads(m)
+        except ValueError: errs.append("match is not valid JSON"); m = None
     if c.get("execution_method") == "Schemathesis":
-        m = c.get("match")
-        if isinstance(m, str):
-            try: m = json.loads(m)
-            except ValueError: errs.append("match is not valid JSON"); m = None
         if not isinstance(m, dict) or not all(m.get(k) for k in ("method", "path", "role", "assertions")):
             errs.append("Schemathesis cases need match{method,path,role,assertions[]}")
-        elif m["role"] not in ("any", c.get("role")): errs.append("match.role must equal role (or be 'any' for spec/protocol cases)")
+        elif m["role"] not in ("any", c.get("role")) and c.get("role") != "other":     # 'other' = some non-owner, non-admin user
+            errs.append("match.role must equal role (or be 'any' for spec/protocol cases)")
     if c.get("requirement_status") in ("Conflict", "Unclear") and not (c.get("unchecked") or c.get("blocked_reason")):
         errs.append("Conflict/Unclear cases need blocked_reason (what must be clarified)")
-    if c.get("check_level") == "Status-only" and c.get("response_assertions"):
-        errs.append("a Status-only case must not carry response assertions - split it into a Response-content case")
+    if c.get("check_level") == "Status-only":
+        # judged on what is actually asserted, not on words in a text column
+        if isinstance(m, dict) and {a.get("type") for a in m.get("assertions", [])} & {"body_json", "header"}:
+            errs.append("a Status-only case must not assert the body or headers - split it into a Response-content case")
+        elif not isinstance(m, dict) and c.get("response_assertions"):
+            errs.append("a Status-only case must not carry response assertions - split it into a Response-content case")
     return errs
 
 
@@ -371,8 +456,9 @@ def slot(ws, group_field, group_val, placeholder_key, flow=False):
     return r, False
 
 
-def apply_design(data):
-    wb = load_workbook(XLSX); require_v2(wb); bk = backup("pre-design")
+def apply_design(data, dry_run=False):
+    """dry_run: validate and report exactly what WOULD happen; nothing is saved, backed up or written to flows/*.json"""
+    wb = load_workbook(XLSX); require_v2(wb); bk = None if dry_run else backup("pre-design")
     rows, _ = read_sheet(); info = {norm_ep(r["Endpoint ID"]): r for r in rows}
     rep = {"added": [], "existing_kept": [], "rejected": [], "blocked_at_design": [], "flows_added": 0, "flows_updated": 0}
     for c in data.get("cases", []):
@@ -417,9 +503,9 @@ def apply_design(data):
         setv(fw, r, "flow", fid, True)
         cur = getv(fw, r, "result", True)
         put(fw, r, {k: v for k, v in f.items() if k != "key" and not (k in ("result", "run_date") and cur not in (None, "", "NOT RUN"))}, flow=True)
-        persist_flow_step(fid, f)
-    save(wb)
-    rep["backup"] = bk
+        if not dry_run: persist_flow_step(fid, f)
+    if not dry_run: save(wb)
+    rep["backup"] = bk; rep["dry_run"] = dry_run
     print(json.dumps(rep, indent=1, ensure_ascii=False))
     if rep["rejected"]: sys.exit(2)
 
@@ -452,6 +538,11 @@ def flows_sync():
 
 
 # ------------------------------------------------------------------ results
+def set_actual(ws, r, v):
+    """Actual status / Actual response = what the API really returned (from the evidence), not assertion text"""
+    setv(ws, r, "actual_status", v.get("actual_status")); setv(ws, r, "actual_response", v.get("actual_response"))
+
+
 def apply_results(data):
     wb = load_workbook(XLSX); require_v2(wb); bk = backup("pre-results")
     rows, _ = read_sheet(); info = {norm_ep(r["Endpoint ID"]): r for r in rows}
@@ -477,27 +568,24 @@ def apply_results(data):
         if kind == "executed" and reqs in ("Conflict", "Unclear"):
             # the evidence is real, but the expected behaviour is unresolved: record what was observed, keep the case BLOCKED
             observed = v["result"]; bump(run, "BLOCKED")
-            if cur != "BLOCKED": setv(ws, r, "previous_result", cur); setv(ws, r, "previous_run_id", getv(ws, r, "run_id"))
             setv(ws, r, "result", "BLOCKED"); setv(ws, r, "run_date", today()); setv(ws, r, "run_id", run)
-            setv(ws, r, "evidence", v.get("evidence")); setv(ws, r, "actual", v.get("actual"))
+            setv(ws, r, "evidence", v.get("evidence")); set_actual(ws, r, v)
             setv(ws, r, "unchecked", f"Observed {observed} in {run}; expected behaviour unresolved ({reqs}) - clarify before this can PASS or FAIL")
             add_history(wb, key, v["tc_id"], ep, cur, "BLOCKED", "executed-unresolved", run, v.get("evidence"), f"observed {observed}; requirement {reqs} | " + note)
             summary["blocked"].append({"tc_id": v["tc_id"], "reason": f"observed {observed}; requirement {reqs}", "kept": None, "observed": observed})
         elif kind == "executed":
             new = v["result"]; bump(run, new)
             if new != cur:
-                setv(ws, r, "previous_result", cur); setv(ws, r, "previous_run_id", getv(ws, r, "run_id"))
                 summary["changed"].append({"tc_id": v["tc_id"], "from": cur, "to": new, "run_id": run})
             else:
                 summary["reconfirmed"].append({"tc_id": v["tc_id"], "result": new, "run_id": run})
             setv(ws, r, "result", new); setv(ws, r, "run_date", today()); setv(ws, r, "run_id", run)
-            setv(ws, r, "evidence", v.get("evidence")); setv(ws, r, "actual", v.get("actual"))
+            setv(ws, r, "evidence", v.get("evidence")); set_actual(ws, r, v)
             setv(ws, r, "unchecked", v.get("unchecked") or None)
             add_history(wb, key, v["tc_id"], ep, cur, new, "execution" if new != cur else "re-executed", run, v.get("evidence"), note)
         elif kind == "blocked":
             bump(run, "BLOCKED")
             if cur in ("NOT RUN", "BLOCKED", "", None):
-                if cur != "BLOCKED": setv(ws, r, "previous_result", cur)
                 setv(ws, r, "result", "BLOCKED")
             setv(ws, r, "unchecked", v.get("reason") or v.get("unchecked"))
             add_history(wb, key, v["tc_id"], ep, cur, getv(ws, r, "result"), "blocked-attempt", run, v.get("evidence"),
@@ -546,6 +634,43 @@ def apply_results(data):
     print(json.dumps(summary, indent=1, ensure_ascii=False))
 
 
+def apply_corrections(data, dry_run=False):
+    """CORRECT step: human-approved edits to EXISTING case rows (labels, wording, match spec, preconditions...).
+    Never touches results / run data / ids; every change is logged (Result History tab + reports/EP-NNN/results-history.md)."""
+    wb = load_workbook(XLSX); require_v2(wb); bk = None if dry_run else backup("pre-correct")
+    rows, _ = read_sheet(); info = {norm_ep(r["Endpoint ID"]): r for r in rows}
+    rep = {"changed": [], "unchanged": [], "rejected": [], "dry_run": dry_run, "backup": bk}
+    for c in data.get("corrections", []):
+        tc = c.get("tc_id"); ep = norm_ep(c.get("ep", "0")); r0 = info.get(ep)
+        if not r0: rep["rejected"].append({"tc_id": tc, "why": f"unknown endpoint {c.get('ep')}"}); continue
+        ws = wb[sheet_name(r0["Module"])]
+        r = next((i for i in range(2, ws.max_row + 1) if getv(ws, i, "tc_id") == tc), None)
+        if r is None: rep["rejected"].append({"tc_id": tc, "why": "case row not found"}); continue
+        sets = c.get("set") or {}; bad = [f for f in sets if f not in CASE_F or f in RESULT_FAMILY or f in STATIC]
+        if bad: rep["rejected"].append({"tc_id": tc, "why": f"fields not correctable: {bad} (results change only via evidence apply)"}); continue
+        errs = []
+        for f, v in sets.items():
+            if f in LISTS and v not in (None, "") and v not in LISTS[f].split(","): errs.append(f"{f}='{v}' not one of {LISTS[f]}")
+            if f == "match" and v not in (None, ""):
+                try: json.loads(v) if isinstance(v, str) else json.dumps(v)
+                except ValueError: errs.append("match is not valid JSON")
+        if errs: rep["rejected"].append({"tc_id": tc, "why": errs}); continue
+        diffs = []
+        for f, v in sets.items():
+            old = getv(ws, r, f); new = json.dumps(v, ensure_ascii=False) if f == "match" and not isinstance(v, str) else v
+            if str(old if old is not None else "") == str(new if new is not None else ""): continue
+            diffs.append(f"{f}: {_cell(old)[:80]} -> {_cell(new)[:80]}")
+            if not dry_run: setv(ws, r, f, new)
+        if not diffs: rep["unchanged"].append(tc); continue
+        if not dry_run:
+            add_history(wb, getv(ws, r, "key"), tc, ep, getv(ws, r, "result"), getv(ws, r, "result"), "correction", None, None,
+                        "; ".join(diffs) + (f" | reason: {c['reason']}" if c.get("reason") else ""))
+        rep["changed"].append({"tc_id": tc, "changes": diffs})
+    if not dry_run: save(wb)
+    print(json.dumps(rep, indent=1, ensure_ascii=False))
+    if rep["rejected"]: sys.exit(2)
+
+
 # ------------------------------------------------------------------ conflicts / listings
 def apply_conflicts(data):
     wb = load_workbook(XLSX); require_v2(wb); backup("pre-conflict")
@@ -571,7 +696,6 @@ def apply_conflicts(data):
                 if r is None: continue
                 cur = getv(wsm, r, "result") or "NOT RUN"
                 if cur in ("NOT RUN", "BLOCKED") or c.get("force_block"):
-                    if cur != "BLOCKED": setv(wsm, r, "previous_result", cur)
                     setv(wsm, r, "result", "BLOCKED"); setv(wsm, r, "requirement_status", "Conflict")
                     setv(wsm, r, "unchecked", f"{cid}: expected behaviour not clarified - {c.get('topic')}")
                     add_history(wb, getv(wsm, r, "key"), tc, ep, cur, "BLOCKED", "conflict", None, None, f"{cid} {c.get('topic')}")
@@ -608,8 +732,11 @@ if __name__ == "__main__":
     cmd = a[0] if a else ""
     if cmd == "init": build("--force" in a)
     elif cmd == "migrate": migrate()
-    elif cmd == "upsert": apply_design(json.load(open(a[1], encoding="utf-8")))
+    elif cmd == "upsert":
+        with open(a[1], encoding="utf-8") as fh: apply_design(json.load(fh), dry_run="--dry-run" in a)
     elif cmd == "apply-results": apply_results(json.load(open(a[1], encoding="utf-8")))
+    elif cmd == "correct":
+        with open(a[1], encoding="utf-8") as fh: apply_corrections(json.load(fh), dry_run="--dry-run" in a)
     elif cmd == "conflict": apply_conflicts(json.load(open(a[1], encoding="utf-8")))
     elif cmd == "cases": print(json.dumps(list_cases(a[1], "--full" in a), indent=1, ensure_ascii=False))
     elif cmd == "roles": print(json.dumps(roles_needed(a[1])))

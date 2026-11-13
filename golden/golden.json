@@ -1,0 +1,37 @@
+{
+ "endpoints": [
+  {
+   "ep": "EP-038",
+   "status": "candidate",
+   "frozen_on": "2026-11-09",
+   "runs": {
+    "user": "RUN-20261109-195606-EP-038-user",
+    "admin": "RUN-20261109-195944-EP-038-admin",
+    "anon": "RUN-20261109-195807-EP-038-anon"
+   },
+   "cases": 58
+  },
+  {
+   "ep": "EP-032",
+   "status": "candidate",
+   "frozen_on": "2026-11-09",
+   "runs": {
+    "user": "RUN-20261109-184340-EP-032-user",
+    "admin": "RUN-20261109-184418-EP-032-admin",
+    "anon": "RUN-20261109-184435-EP-032-anon"
+   },
+   "cases": 19
+  },
+  {
+   "ep": "EP-109",
+   "status": "candidate",
+   "frozen_on": "2026-11-09",
+   "runs": {
+    "user": "RUN-20261109-202832-EP-109-user",
+    "admin": "RUN-20261109-202850-EP-109-admin",
+    "anon": "RUN-20261109-202907-EP-109-anon"
+   },
+   "cases": 18
+  }
+ ]
+}

@@ -3,7 +3,7 @@
   "method": "TRACE",
   "path_template": "/categories",
   "fingerprint": "51f6988c",
-  "case_id": "gJqkGW",
+  "case_id": "HSYrl4",
   "code_sample": "curl -X TRACE -H 'Authorization: [Filtered]' https://api-qa.redspur.com/api/categories",
   "sequence": [
     {
@@ -16,14 +16,14 @@
         "Accept": "*/*",
         "Connection": "keep-alive",
         "Authorization": "[Filtered]",
-        "X-Schemathesis-TestCaseId": "gJqkGW",
+        "X-Schemathesis-TestCaseId": "HSYrl4",
         "Content-Length": "0"
       },
       "response": {
         "status_code": 405,
         "headers": {
           "server": "nginx/1.28.3 (Ubuntu)",
-          "date": "Mon, 09 Nov 2026 07:11:19 GMT",
+          "date": "Fri, 13 Nov 2026 04:22:43 GMT",
           "content-type": "text/html",
           "content-length": "166",
           "connection": "close"
@@ -40,7 +40,7 @@
       ],
       "meta": {
         "generation": {
-          "time": 6.199989002197981e-06,
+          "time": 8.000002708286047e-06,
           "mode": "negative"
         },
         "components": {},

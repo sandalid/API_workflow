@@ -1,31 +1,56 @@
 # EP-033 - Bug report
 
-### BUG-EP033-01 - TRACE on /categories returns 405 without the required `Allow` header
-- Severity: low
-- Type: App bug (framework/platform default behavior) — likely systemic across the whole API, not specific to this controller
-- Endpoint / Env / Role: `GET /categories` (tested with `TRACE`) / `https://api-qa.redspur.com/api` / user
-- Steps to reproduce:
-  ```
-  curl -X TRACE https://api-qa.redspur.com/api/categories
-  st replay gJqkGW
-  ```
-- Expected: Per RFC 9110 §15.5.6, any 405 response must include an `Allow` header listing the methods that are actually supported on this route.
-- Actual: HTTP 405 with no `Allow` header (results_detail.csv row 5: `case gJqkGW, TRACE, 405, check=unsupported_method, failure_code=ST204`).
-- Check / code: `unsupported_method` (ST204); Occurrences: 1; Example case ID: `gJqkGW`.
-- Suspected location: no global exception filter or middleware exists in `apps\api\src\main.ts` that sets an `Allow` header on method-not-allowed responses (grepped, no matches for TRACE/Allow/405). TRACE appears to be rejected by the underlying Node HTTP server/Nest platform layer before it reaches app routing, which is why no `Allow` header is attached. Suggested fix: add a small global filter/middleware that sets `Allow` on 4xx method-not-allowed responses, or confirm this is an accepted platform limitation and document it. Confidence low — this is inferred from the absence of app-level handling, not a specific line that causes it.
-- Business impact: Minor HTTP-compliance gap; will recur on every endpoint in the API (not unique to EP-033) and will keep tripping strict API-conformance scanners.
+### BUG-EP033-01 - TRACE returns 405 without a required `Allow` header (RFC 9110 §15.5.6)
 
-### BUG-EP033-02 - QUERY on /categories returns 404 instead of 405
-- Severity: low
-- Type: App bug (framework/platform default behavior) — likely systemic across the whole API, not specific to this controller
-- Endpoint / Env / Role: `GET /categories` (tested with `QUERY`) / `https://api-qa.redspur.com/api` / user
-- Steps to reproduce:
-  ```
-  curl -X QUERY https://api-qa.redspur.com/api/categories
-  st replay cbloDm
-  ```
-- Expected: an unmapped-but-reasonable HTTP method on a path that exists should return `405 Method Not Allowed`, not `404 Not Found` (Schemathesis's `unsupported_method` check expectation).
-- Actual: HTTP 404 (results_detail.csv row 11: `case cbloDm, QUERY, 404, check=unsupported_method, failure_code=ST204, "Unsupported method QUERY returned 404, expected 405 Method Not Allowed"`).
-- Check / code: `unsupported_method` (ST204); Occurrences: 1; Example case ID: `cbloDm`.
-- Suspected location: no custom routing/404/405 handling found in `apps\api\src\main.ts`. `QUERY` is a newer/unregistered HTTP method in Express's default method table, so it falls through to Express/Nest's generic "no matching route" 404 handler rather than a method-not-allowed 405 — this is default framework behavior, not code specific to `CategoriesController`. Confidence low on exact fix location since no app-level code owns this behavior; fixing would require a global catch-all route/middleware that recognizes known paths and returns 405 for any method not in that path's allowed set.
-- Business impact: Low; `QUERY` is not yet in common client use, but the 404-vs-405 mismatch is systemic to the whole API and will show up identically in every other endpoint's run, not just EP-033.
+- Severity: Low | Type: Infrastructure
+- Endpoint: GET /categories (observed via unsupported-method probe TRACE) | env: api-qa.redspur.com | roles: user, other, admin | runs: `RUN-20261113-095151-EP-033-user` (case `76RECu`), `RUN-20261113-095214-EP-033-other` (case `ILoZR8`), `RUN-20261113-095236-EP-033-admin` (case `HSYrl4`)
+- Steps to reproduce: `TRACE https://api-qa.redspur.com/api/categories` (replay case `76RECu` / `ILoZR8` / `HSYrl4`; `st replay 76RECu`, etc.)
+- Expected: per Schemathesis's `unsupported_method` check (ST204), a 405 response must carry an `Allow` header listing the supported methods.
+- Actual: 405 with an nginx-generated error page body ("405 Not Allowed" / nginx/1.28.3 (Ubuntu)), no `Allow` header, for all three roles (`results_detail.csv` for each run, row `unsupported_method,FAILURE,ST204,medium,"TRACE returned 405 without required Allow header..."`).
+- Check/code: ST204 (`unsupported_method`). Occurrences: 3 (user, other, admin — each 1 occurrence; anon's TRACE case `VXpqmA` also returned 405 without the header per `results_detail.csv` row 5, but that occurrence was absorbed into TC-033-011's PASS because TC-033-011 was pre-loosened to assert status-only, with no Allow-header check — so anon's instance of this same behavior does not appear in the `new_cases`/`unmatched_failures` list, though the underlying response is identical). Workbook TC IDs: none hold a FAIL for this — all four occurrences appear only in `verdicts.json`'s `new_cases` (for user/other/admin) because no existing case asserts the Allow-header requirement.
+- Suspected location: the 405 response body ("nginx/1.28.3") indicates this is generated by the nginx reverse proxy in front of the Nest API, not by application code — there is no Nest-level TRACE handler to point at (`apps\api\src\categories\categories.controller.ts:6-14` only registers `@Get()` routes). Suggested fix: configure nginx (or add a method-not-allowed filter at the Nest/Express layer in front of nginx) to emit an `Allow: GET, HEAD, OPTIONS` header on 405 responses for this and other GET-only routes.
+- Business impact: low — RFC-compliance gap only; no client in this product (mobile is the only consumer per the audit) issues TRACE requests, so there is no functional impact on the app today.
+
+### BUG-EP033-02 - Unregistered HTTP methods (e.g. QUERY) return 404 instead of 405
+
+- Severity: Low | Type: Spec/docs bug (Schemathesis contract-expectation mismatch) / Infrastructure
+- Endpoint: GET /categories | env: api-qa.redspur.com | roles: anon, user, other, admin | runs: `RUN-20261113-095130-EP-033-anon` (case `GEotaX`), `RUN-20261113-095151-EP-033-user` (case `1rzq6G`), `RUN-20261113-095214-EP-033-other` (case `sWBCbI`), `RUN-20261113-095236-EP-033-admin` (case `BcqTBA`)
+- Steps to reproduce: `QUERY https://api-qa.redspur.com/api/categories` (replay case `GEotaX`, etc.)
+- Expected: Schemathesis's `unsupported_method` check (ST204) expects 405 Method Not Allowed for any method not listed in the OpenAPI spec for this path.
+- Actual: 404 with Nest's standard JSON body `{"success":false,"statusCode":404,"message":"Cannot QUERY /categories","error":"Not Found"}` for all four roles (`results_detail.csv`, row `unsupported_method,FAILURE,ST204,medium,"Unsupported method QUERY returned 404, expected 405..."` in every one of the four runs).
+- Check/code: ST204 (`unsupported_method`). Occurrences: 4 (anon, user, other, admin — 1 each). Workbook TC IDs: none hold a FAIL — all four appear in `verdicts.json`'s `new_cases`/`unmatched_failures` because no existing workbook case asserts 404-vs-405 for this specific probe (TC-033-012, the only case that targets a non-GET method as "Confirmed", has no matching evidence at all — see summary).
+- Suspected location: `apps\api\src\categories\categories.controller.ts:6-14` — the controller registers only `@Get()` on this path, so an unregistered verb on an *existing* path falls through to Nest/Express's default router behavior, which returns 404 "Cannot {METHOD} {path}" rather than a 405. There is no custom not-found/method-not-allowed filter in this module to adjust. This is standard Express/Nest routing behavior, not a bug introduced by this endpoint's own code, but it does not match the stricter REST convention Schemathesis's `unsupported_method` check assumes (404 for verbs it doesn't recognize vs. 405 for verbs that exist on the path but not this route).
+- Business impact: negligible — this is a framework-default status code choice with no observed client dependency on either status; raising as a spec/contract note rather than an app defect requiring a code fix.
+
+### BUG-EP033-03 - Potential defect, requirement unclear: sheet title's "customer-facing taxonomy filter confirmed with BA" has no corresponding implementation
+
+- Severity: Medium (spec/doc gap feeding into test-design risk) | Type: Potential defect - requirement unclear
+- Endpoint: GET /categories | env: api-qa.redspur.com (code/schema review, not a live-request finding) | workbook cases TC-033-016 (Conflict), TC-033-017 (Conflict)
+- Steps to reproduce: n/a — this is a requirement/code-mismatch, not a runtime reproduction. Evidence is static: `apps\api\src\categories\categories.repository.ts:17-19` (`findMany` with no `where` clause); `prisma\schema.prisma:543-565` (no `isActive`/`visible`/`customerFacing`/`status` column on `Category`); `apps\api\src\admin\dto\create-category.dto.ts` / `update-category.dto.ts` (no such field accepted on write either).
+- Expected: per the sheet's title, "the category tree correctly reflects only categories intended to be customer-facing, per taxonomy rules confirmed with BA" — implying a filter exists and is testable.
+- Actual: no filter, visibility column, or admin-write field implementing "customer-facing" exists anywhere in the module or schema (audit findings #3, confidence high). Additionally, the sheet calls this the "category tree," but `GET /categories` is the flat list (`findAll()` — `categories.controller.ts:11-14`); the actual tree is the separate `GET /categories/tree` operation (`getTree()` — `categories.controller.ts:19-22`).
+- Check/code: not a Schemathesis check — flagged via `unresolved_expectations` in `verdicts.json` (`CF-033-01`, `CF-033-03`) and the audit's Source agreement matrix (two separate "Conflict" rows: "Only customer-facing categories filter" and "Endpoint path is the 'tree'"). Occurrences: n/a (design-time conflict, not a request-level failure). Workbook TC IDs affected: TC-033-016, TC-033-017 (both correctly left BLOCKED/Conflict, not asserted as PASS or FAIL, per the independent case review's confirmation that this handling is correct).
+- Suspected location: `apps\api\src\categories\categories.controller.ts:6-14` (route actually implemented) vs. the sheet row's title (business requirement text) — this is a requirement-clarity gap, not a code location to fix. Suggested next step: ask the BA/PO whether (a) the sheet row should instead point at `GET /categories/tree`, and (b) whether "customer-facing" means something not yet implemented (e.g. a future visibility flag) or is considered trivially true today ("whatever the admin created is customer-facing by definition"). FIX SPEC/clarify-requirement, not FIX CODE, until that's answered.
+- Business impact: a BA-stated product rule currently has zero enforcement in code; if the rule is real, categories that should be hidden from customers are not actually filterable today, which is a business-rule gap, not yet a proven runtime defect.
+
+### BUG-EP033-04 - Potential defect, requirement unclear (medium confidence): legacy/off-tree categories may coexist unfiltered with the curated tree
+
+- Severity: Medium (if confirmed live) | Type: Potential defect - requirement unclear
+- Endpoint: GET /categories | workbook case TC-033-008 (Conflict, `CF-033-02`)
+- Steps to reproduce: n/a — static code-comment evidence only, not confirmed against a live DB in this run (no `/categories` fixtures exist in `fixtures.json`, so Schemathesis could not seed or probe this state). Evidence: `apps\api\src\categories\categories.repository.ts:24-29` (doc comment: "QA still holds the legacy flat categories (Boots, Shirts & Tops, …) beside the Women/Men/Kids/Gear tree"); `apps\api\src\embeddings\embeddings.service.ts:236-239` (comment: "listings carry two taxonomies at once").
+- Expected: sheet's implied framing is "curated tree only" is returned.
+- Actual (per code comments only, medium confidence): `findAll()` applies no filter (`categories.repository.ts:17-19`, no `where` clause) and would return any legacy/off-tree row alongside the curated tree if one exists in the DB.
+- Check/code: not a Schemathesis check — `unresolved_expectations` in `verdicts.json` (`CF-033-02`). Occurrences: n/a. Workbook TC IDs affected: TC-033-008 (correctly BLOCKED/Conflict).
+- Suspected location: `apps\api\src\categories\categories.repository.ts:17-19` (no filter) vs. the only mitigation found, a one-off manual dev-data migration (`docs\features\taxonomy-tree.md:60`), not an enforced rule. Suggested next step: query the current QA/production DB directly for legacy-slug rows (e.g. "Boots", "Shirts & Tops") to confirm or refute live-state before treating this as a confirmed defect — the audit explicitly flags this as medium confidence, "a strong lead, not a confirmed live-state fact."
+- Business impact: if confirmed live, customers could see deprecated/legacy categories in browse/search pickers alongside the curated tree, which would be a visible UX defect; not yet proven.
+
+### BUG-EP033-05 - Spec gap: OpenAPI `200` response for GET /categories declares no schema
+
+- Severity: Low | Type: Spec/docs bug
+- Endpoint: GET /categories | spec: `schemathesis\spec\openapi.pretty.json:1215-1219` | workbook case TC-033-015 (BLOCKED)
+- Steps to reproduce: inspect the spec directly; no request needed — `"200": { "description": "" }` with no `schema`/`content` key under `operationId: CategoriesController_findAll` (`openapi.pretty.json:1210-1224`).
+- Expected: a response schema describing the `Category[]` array (`id, name, slug, icon, image, sortOrder, createdAt, updatedAt`, matching the raw Prisma shape at `categories.repository.ts:17-19`) so schema-conformance checks are meaningful.
+- Actual: TC-033-015's `response_schema_conformance` check could not be meaningfully performed in any of the 4 runs — `verdicts.json` records it as `unperformed`/"passed vacuously" because the spec declares no schema (`RUN-20261113-095130-EP-033-anon`, evidence for TC-033-015).
+- Check/code: not a FAIL, a structural BLOCKED — `check:response_schema_conformance`. Occurrences: 1 BLOCKED case (TC-033-015), consistent across all 4 runs (same spec used in each, sha256 `8c58e57f...`).
+- Suspected location: OpenAPI decorator/DTO for `CategoriesController.findAll()` (`apps\api\src\categories\categories.controller.ts:10-14`) — no `@ApiResponse({ type: ... })` or equivalent schema decorator is present. Suggested fix: add a response DTO/schema (e.g. a `CategoryDto` array) via `@ApiOkResponse({ type: CategoryDto, isArray: true })` or equivalent, matching the pattern that should also address the over-exposure items (#1, #2 in the Fields/params table in summary.md).
+- Business impact: low directly, but it removes the ability for any future Schemathesis run (or any contract-testing tool) to catch an accidental breaking response-shape change on this endpoint.

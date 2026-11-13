@@ -1,0 +1,50 @@
+{
+ "cases": [
+  {
+   "ep": "EP-033",
+   "key": "COV:db-failure-500",
+   "scenario": "Unhandled Prisma/DB failure surfaces as Nest's default 500 handler - exact error body shape not independently confirmed",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "No explicit try/catch in categories.service.ts:14-16 or the repository call; no global exception filter definition was found in the audit pass to confirm the exact 500 body shape",
+   "test_data": "n/a",
+   "steps": "Cannot reliably trigger a DB-layer failure without fault injection (e.g. severing the DB connection); no params/body exist to force an error via a normal request",
+   "expected_status": "500 (if triggered)",
+   "expected": "Unclear - a DB failure would surface as an unhandled 500 via Nest's default exception filter, but the exact body shape is not independently confirmed (audit 'Could not verify' section)",
+   "expected_source": "Backend code",
+   "requirement_status": "Unclear",
+   "blocked_reason": "Cannot reliably trigger a DB/Prisma failure via a normal HTTP request (no params/body to manipulate); would need fault injection (e.g. a staging DB outage) not available to this run. Exact 500 body shape not independently confirmed in the audit's 'Could not verify' section.",
+   "execution_method": "Manual",
+   "source": "audit EP-033 'Could not verify' section; Declared Contract - Error responses; categories.service.ts:14-16"
+  },
+  {
+   "ep": "EP-033",
+   "key": "COV:injection-query-junk",
+   "scenario": "Malformed/injection-style junk on a zero-param endpoint does not error or leak data",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Security",
+   "preconditions": "No params declared at all for this op (openapi.pretty.json:1210-1224 parameters: [])",
+   "test_data": "?id=' OR 1=1--",
+   "steps": "GET /categories?id=%27%20OR%201%3D1--",
+   "expected_status": "200",
+   "response_assertions": "array unchanged (same content as a plain GET /categories call); no 5xx; no error body",
+   "expected": "200, unaffected; confirms no data leak or crash from injection-shaped junk query strings",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "COV: gap-fill mirroring EP-032 suggested scenario #10; categories.controller.ts:6-14 (findAll takes no arguments)",
+   "match": {
+    "method": "GET",
+    "path": "/categories",
+    "role": "anon",
+    "assertions": [
+     {"type": "status", "in": [200]}
+    ]
+   }
+  }
+ ]
+}

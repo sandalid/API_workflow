@@ -1,0 +1,99 @@
+{
+ "ep": "EP-109",
+ "curation": "auto-skeleton: NOT reviewed by a human - add must_mention / must_not_claim before approving",
+ "audit": {
+  "required_sections": [
+   "## Findings",
+   "## Test design inputs",
+   "## Source agreement matrix",
+   "## Suggested test scenarios"
+  ],
+  "must_mention": [],
+  "must_not_claim": [],
+  "must_cite": [
+   {
+    "id": "sellers.controller.ts:getProfile",
+    "file": "sellers.controller.ts",
+    "lines": [
+     127,
+     133
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "sellers.service.ts:getProfile",
+    "file": "sellers.service.ts",
+    "lines": [
+     495,
+     524
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "jwt-auth.guard.ts:handleRequest",
+    "file": "jwt-auth.guard.ts",
+    "lines": [
+     11,
+     25
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "sellers.service.ts:getAllSellers",
+    "file": "sellers.service.ts",
+    "lines": [
+     1253,
+     1285
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "sellers.service.ts:getSellerByIdForAdmin",
+    "file": "sellers.service.ts",
+    "lines": [
+     1294,
+     1330
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "admin.service.ts:suspendUser",
+    "file": "admin.service.ts",
+    "lines": [
+     382,
+     388
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "schema.prisma:isSeller",
+    "file": "schema.prisma",
+    "lines": [
+     328,
+     328
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "sellersApi.ts:SellerProfile",
+    "file": "sellersApi.ts",
+    "lines": [
+     40,
+     64
+    ],
+    "tolerance": 15
+   }
+  ],
+  "baseline_citations": {
+   "total": 124,
+   "FAIL": 1,
+   "WARN": 12
+  }
+ },
+ "design": {
+  "required_dimensions": [],
+  "required_checks": [],
+  "min_cases": 9,
+  "max_cases": 46
+ }
+}

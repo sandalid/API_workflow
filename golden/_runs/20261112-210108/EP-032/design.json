@@ -1,0 +1,471 @@
+{
+ "cases": [
+  {
+   "ep": "EP-032",
+   "key": "ST:anon-200",
+   "scenario": "Anonymous lists brands",
+   "test_type": "Schemathesis",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "No auth",
+   "test_data": "none",
+   "steps": "GET /brands without Authorization",
+   "expected_status": "200",
+   "response_assertions": "",
+   "business_outcome": "Public list reachable",
+   "expected": "anon GET /brands -> 200",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 1 | Backend code brands.controller.ts:11",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "anon",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "ST:user-200",
+   "scenario": "Buyer/seller token lists brands",
+   "test_type": "Schemathesis",
+   "role": "user",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "Valid user token",
+   "test_data": "none",
+   "steps": "GET /brands with user Bearer",
+   "expected_status": "200",
+   "response_assertions": "",
+   "business_outcome": "No auth required, token harmless",
+   "expected": "user GET /brands -> 200",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 2",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "user",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "ST:admin-200",
+   "scenario": "Admin token lists brands",
+   "test_type": "Schemathesis",
+   "role": "admin",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "Valid admin token",
+   "test_data": "none",
+   "steps": "GET /brands with admin Bearer",
+   "expected_status": "200",
+   "response_assertions": "",
+   "business_outcome": "Public for all roles",
+   "expected": "admin GET /brands -> 200",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 2",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "admin",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ]
+   },
+   "blocked_reason": "No admin account configured for the runner (verify with roles)"
+  },
+  {
+   "ep": "EP-032",
+   "key": "RC:array-body",
+   "scenario": "Response is a JSON array",
+   "test_type": "Functional",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Response-content",
+   "preconditions": "No auth",
+   "test_data": "none",
+   "steps": "GET /brands",
+   "expected_status": "200",
+   "response_assertions": "body is JSON array; header content-type contains application/json",
+   "business_outcome": "List returned as array",
+   "expected": "200 with JSON array",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 3 | Backend code brands.controller.ts:11",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "anon",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "$",
+      "op": "type",
+      "value": "array"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "RC:item-shape",
+   "scenario": "Each item has id,name,slug,itemCount,logo",
+   "test_type": "Functional",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Response-content",
+   "preconditions": "At least one brand",
+   "test_data": "none",
+   "steps": "GET /brands, inspect first item",
+   "expected_status": "200",
+   "response_assertions": "item.id string; item.name string; item.slug string; item.itemCount integer >= 0; item.logo string or null",
+   "business_outcome": "Shape as mapped by repository",
+   "expected": "Item shape correct",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "Audit scenario 3 (spec has no schema; body checks need element access) | Backend code brands.repository.ts:22"
+  },
+  {
+   "ep": "EP-032",
+   "key": "BR:order-name-asc",
+   "scenario": "Brands ordered by name ascending",
+   "test_type": "Business Rule",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "2+ brands exist",
+   "test_data": "none",
+   "steps": "GET /brands; compare names order",
+   "expected_status": "200",
+   "response_assertions": "names sorted ascending",
+   "business_outcome": "Alphabetical listing",
+   "expected": "Names ascending",
+   "expected_source": "Documentation",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "KB:BR-BRANDS-001 | Documentation (qa-knowledge) BR-BRANDS-001 + brands.repository.ts:14"
+  },
+  {
+   "ep": "EP-032",
+   "key": "BR:itemcount-live-only",
+   "scenario": "itemCount counts only live listings",
+   "test_type": "Business Rule",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "Brand with approved/active, sold, rejected, soft-deleted listings",
+   "test_data": "Brand with mixed-state listings",
+   "steps": "GET /brands; find brand",
+   "expected_status": "200",
+   "response_assertions": "brand.itemCount == number of approved/active non-deleted listings of non-leaving sellers",
+   "business_outcome": "Only live listings counted",
+   "expected": "itemCount excludes non-live",
+   "expected_source": "Documentation",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "KB:BR-BRANDS-002 | Documentation (qa-knowledge) BR-BRANDS-002 + brands.repository.ts:17",
+   "blocked_reason": "No brand fixture with mixed-state listings in fixtures.json (only listing ids by state exist)"
+  },
+  {
+   "ep": "EP-032",
+   "key": "BR:zero-count-listed",
+   "scenario": "Brand with zero live listings still listed",
+   "test_type": "Business Rule",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "Brand with no live listings",
+   "test_data": "Empty brand",
+   "steps": "GET /brands; find empty brand",
+   "expected_status": "200",
+   "response_assertions": "brand present; itemCount == 0",
+   "business_outcome": "Empty brands not hidden",
+   "expected": "Present with itemCount 0",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "Audit scenario 6 | Backend code brands.repository.ts:12-22",
+   "blocked_reason": "No empty-brand fixture in fixtures.json"
+  },
+  {
+   "ep": "EP-032",
+   "key": "BR:freshness",
+   "scenario": "itemCount updates immediately after status change",
+   "test_type": "Business Rule",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Business-rule",
+   "preconditions": "Listing of known brand",
+   "test_data": "Listing status change then refetch",
+   "steps": "1 GET /brands; 2 change listing status; 3 GET /brands",
+   "expected_status": "200",
+   "response_assertions": "itemCount differs by the status change",
+   "business_outcome": "No caching",
+   "expected": "Count recomputed per call",
+   "expected_source": "Documentation",
+   "requirement_status": "Assumed",
+   "execution_method": "E2E",
+   "source": "KB gap 40 / audit scenario 11 | Documentation (qa-knowledge) gap 40",
+   "blocked_reason": "Multi-step; needs mutating fixture"
+  },
+  {
+   "ep": "EP-032",
+   "key": "NEG:extra-params",
+   "scenario": "Unexpected query params ignored, no 5xx",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Security",
+   "preconditions": "none",
+   "test_data": "?limit=1, ?name=x, injection strings",
+   "steps": "GET /brands?limit=1",
+   "expected_status": "200",
+   "response_assertions": "Same full list; never 5xx",
+   "business_outcome": "Unknown params ignored",
+   "expected": "200, no 5xx",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 7",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "anon",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200,
+       400,
+       404
+      ]
+     }
+    ],
+    "generation": "negative"
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "NEG:post-method",
+   "scenario": "POST /brands not allowed",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "none",
+   "steps": "POST /brands",
+   "expected_status": "404",
+   "response_assertions": "not 5xx",
+   "business_outcome": "Wrong method rejected",
+   "expected": "POST -> 404/405, not 5xx",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 8",
+   "match": {
+    "method": "POST",
+    "path": "/brands",
+    "role": "anon",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404,
+       405
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "NEG:delete-method",
+   "scenario": "DELETE /brands not allowed",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "none",
+   "steps": "DELETE /brands",
+   "expected_status": "404",
+   "response_assertions": "not 5xx",
+   "business_outcome": "Wrong method rejected",
+   "expected": "DELETE -> 404/405, not 5xx",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 8",
+   "match": {
+    "method": "DELETE",
+    "path": "/brands",
+    "role": "anon",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404,
+       405
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "NEG:get-by-id",
+   "scenario": "GET /brands/{id} has no route",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "id=abc123",
+   "steps": "GET /brands/abc123",
+   "expected_status": "404",
+   "response_assertions": "not 200",
+   "business_outcome": "No by-id route",
+   "expected": "404",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 9 | Backend code (mobile comment services/brandsApi.ts:19)",
+   "match": {
+    "method": "GET",
+    "path": "/brands/abc123",
+    "role": "anon",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-032",
+   "key": "CT:schema-200",
+   "scenario": "200 conforms to spec schema",
+   "test_type": "Schema/Contract",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Contract",
+   "preconditions": "none",
+   "test_data": "none",
+   "steps": "GET /brands",
+   "expected_status": "200",
+   "response_assertions": "",
+   "business_outcome": "Contract",
+   "expected": "Schema conformance",
+   "expected_source": "OpenAPI spec",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit: spec has no response schema | Spec",
+   "match": {
+    "method": "GET",
+    "path": "/brands",
+    "role": "anon",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "check",
+      "name": "response_schema_conformance"
+     }
+    ]
+   },
+   "blocked_reason": "spec has no response schema for 200"
+  },
+  {
+   "ep": "EP-032",
+   "key": "SEC:rate-limit",
+   "scenario": "429 after burst",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Security",
+   "preconditions": "Throttler configured",
+   "test_data": "Burst of requests",
+   "steps": "Repeat GET /brands rapidly",
+   "expected_status": "429",
+   "response_assertions": "",
+   "business_outcome": "Throttling applies",
+   "expected": "429 after limit",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "Audit scenario 10 | QA suggestion (app.module.ts:104)",
+   "blocked_reason": "Throttle limit not known; needs load script"
+  },
+  {
+   "ep": "EP-032",
+   "key": "SEC:invalid-token",
+   "scenario": "Invalid bearer token on public route",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Security",
+   "preconditions": "none",
+   "test_data": "Authorization: Bearer invalid",
+   "steps": "GET /brands with bad token",
+   "expected_status": "200",
+   "response_assertions": "",
+   "business_outcome": "Public route ignores token (no guard)",
+   "expected": "200 (no guard)",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "QA suggestion | Backend code (no guards)"
+  }
+ ]
+}

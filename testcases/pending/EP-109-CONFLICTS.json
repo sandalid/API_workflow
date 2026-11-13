@@ -1,0 +1,15 @@
+{
+ "conflicts": [
+  {
+   "ep": "EP-109",
+   "id": "CF-109-01",
+   "topic": "Sheet title asks to verify a suspended seller's own profile view reflects 'suspended' status; this is structurally impossible under shipped code",
+   "requirement": "Sheet row title: \"Sellers Controller get Profile - Verify a suspended seller's own profile view clearly reflects the suspended status.\" Implies a suspended seller can reach a 200 profile response showing a suspended indicator.",
+   "spec": "openapi.json documents no schema at all for GET /sellers/me 200, and no 401/403/404 for this operation - the spec says nothing either way.",
+   "code": "jwt.strategy.ts:34-62 (specifically :42) - JwtStrategy.validate throws 401 'Account suspended.' for any suspended account, live from the DB, before SellersController.getProfile ever runs; auth.service.ts:166-168 (+4 more call sites) blocks login itself for suspended accounts; sellers.service.ts:495-524 (:500-523) - even if the auth gate were bypassed, the getProfile() response DTO has no suspended/status field at all, unlike getAllSellers/getSellerByIdForAdmin (sellers.service.ts:1253-1285, :1294-1330) which do carry such a field",
+   "affected_tcs": ["TC-109-006"],
+   "status": "Open",
+   "block": true
+  }
+ ]
+}

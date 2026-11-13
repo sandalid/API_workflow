@@ -1,0 +1,22 @@
+EP-038 workbook: 69 cases | BLOCKED 19 | FAIL 10 | NOT RUN 11 | PASS 29 | 55 with a match spec
+   Audit-derived    BLOCKED 1, FAIL 1, NOT RUN 6, PASS 1
+   Business Rule    BLOCKED 10, NOT RUN 2, PASS 15
+   Functional       BLOCKED 2, PASS 8
+   Negative         BLOCKED 1, NOT RUN 1, PASS 1
+   Schema/Contract  BLOCKED 2, FAIL 3, PASS 1
+   Schemathesis     BLOCKED 3, FAIL 6, PASS 3
+   Security/Auth    NOT RUN 2
+latest run per role (23 runs found; --all-runs lists them all):
+   RUN-20261112-225526-EP-038-user  role=user  requests=45  GET statuses={'200': 38, '404': 4}
+      ST204 (unsupported_method): 1 failing request(s)
+      ST103 (status_code_conformance): 4 failing request(s)
+   RUN-20261112-225607-EP-038-admin  role=admin  requests=45  GET statuses={'200': 38, '404': 4}
+      ST204 (unsupported_method): 1 failing request(s)
+      ST103 (status_code_conformance): 4 failing request(s)
+   RUN-20261112-225642-EP-038-anon  role=anon  requests=45  GET statuses={'200': 38, '404': 4}
+      ST103 (status_code_conformance): 4 failing request(s)
+      ST204 (unsupported_method): 1 failing request(s)
+   (skipped unreadable run RUN-20261109-195646-EP-038-admin: JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 2 (char 1))
+failing requests per role and code (from the runs above):
+   ST204: admin 1, anon 1, user 1
+   ST103: admin 4, anon 4, user 4

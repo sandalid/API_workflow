@@ -1,0 +1,18 @@
+{
+ "flow_id": "FLOW-01",
+ "name": "Flow 1 (name TBD)",
+ "steps": [
+  {
+   "flow_name": "Flow 1 (name TBD)",
+   "ep": "EP-033",
+   "key": "EP-033",
+   "step": 1,
+   "endpoints": "EP-033",
+   "data": "No fixtures required (zero params, zero auth). Low-confidence step order: audit EP-033 could not map sheet 'Flow 1' to a specific screen legend; the other endpoints referenced on this flow row in the sheet (EP-035, EP-195, EP-196) have no steps recorded yet to confirm sequence.",
+   "expected": "200, array of categories (TC-033-001..020); role-identical, unauthenticated-equivalent response (no RBAC on this route)",
+   "linked_tcs": "TC-033-001, TC-033-002, TC-033-003, TC-033-004, TC-033-005, TC-033-006, TC-033-007, TC-033-008, TC-033-009, TC-033-010, TC-033-011, TC-033-012, TC-033-013, TC-033-014, TC-033-015, TC-033-016, TC-033-017, TC-033-018, TC-033-019, TC-033-020",
+   "result": "NOT RUN"
+  }
+ ],
+ "updated": "2026-11-13"
+}

@@ -1,0 +1,81 @@
+{
+ "flow_id": "FLOW-16",
+ "name": "Flow 16 (name TBD) - Seller onboarding and profile view",
+ "steps": [
+  {
+   "flow_name": "Flow 16 (name TBD) - Seller onboarding and profile view",
+   "ep": "EP-105",
+   "key": "FLOW-16|EP-105|step1",
+   "step": 1,
+   "endpoints": "EP-105",
+   "action": "GET /sellers/check-shop-name - live shop-name uniqueness check while filling in the apply form",
+   "role": "anon",
+   "data": "Candidate shop name typed into the apply form",
+   "expected": "200, availability flag for the candidate shop name (not independently audited yet - endpoint order inferred from path semantics, not confirmed via call-site tracing)",
+   "automation": "Manual",
+   "result": "NOT RUN"
+  },
+  {
+   "ep": "EP-106",
+   "key": "FLOW-16|EP-106|step2",
+   "step": 2,
+   "endpoints": "EP-106",
+   "action": "POST /sellers/apply - submit the seller application",
+   "role": "user",
+   "data": "Shop name, category, address, etc. per CreateSellerApplicationDto (not independently audited yet)",
+   "expected": "201/200, application created; isSeller remains false until approval/confirmation completes (not independently audited yet)",
+   "automation": "Manual",
+   "result": "NOT RUN"
+  },
+  {
+   "ep": "EP-108",
+   "key": "FLOW-16|EP-108|step3",
+   "step": 3,
+   "endpoints": "EP-108",
+   "action": "GET /sellers/confirm/:token - seller clicks the email confirmation link",
+   "role": "anon",
+   "data": "Confirmation token from the application email",
+   "expected": "200/redirect, account confirmed, isSeller flips to true (not independently audited yet)",
+   "automation": "Manual",
+   "result": "NOT RUN"
+  },
+  {
+   "ep": "EP-107",
+   "key": "FLOW-16|EP-107|step3b",
+   "step": 4,
+   "endpoints": "EP-107",
+   "action": "POST /sellers/resend-confirmation - alternate/fallback branch if the confirmation token expired or was never received (not strictly sequential with step 3)",
+   "role": "user",
+   "data": "Seller's email/account",
+   "expected": "200, a new confirmation email/token issued (not independently audited yet)",
+   "automation": "Manual",
+   "result": "NOT RUN"
+  },
+  {
+   "ep": "EP-109",
+   "key": "FLOW-16|EP-109|step4",
+   "step": 5,
+   "endpoints": "EP-109",
+   "action": "GET /sellers/me - seller views their own profile for the first time after onboarding completes (mobile: ShopDetails.tsx, SellerSettings.tsx; web: app/seller/layout.tsx, app/seller/settings/page.tsx)",
+   "role": "user",
+   "data": "Newly confirmed seller's JWT",
+   "expected": "200 with full profile DTO (isSeller:true, sellerProfile fields populated); see TC-109-001",
+   "linked_tcs": "TC-109-001, TC-109-002, TC-109-003, TC-109-004, TC-109-007, TC-109-008, TC-109-012",
+   "automation": "Schemathesis",
+   "result": "NOT RUN"
+  },
+  {
+   "ep": "EP-133",
+   "key": "FLOW-16|EP-133|step5",
+   "step": 6,
+   "endpoints": "EP-133",
+   "action": "PATCH /sellers/profile - seller edits shop name/profile fields from Settings",
+   "role": "user",
+   "data": "Updated shop name/profile fields (not independently audited yet)",
+   "expected": "200, profile updated; a subsequent GET /sellers/me (step 5) would reflect the change (not independently audited yet)",
+   "automation": "Manual",
+   "result": "NOT RUN"
+  }
+ ],
+ "updated": "2026-11-09"
+}

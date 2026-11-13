@@ -3,7 +3,7 @@
   "method": "QUERY",
   "path_template": "/categories",
   "fingerprint": "9a55262e",
-  "case_id": "cbloDm",
+  "case_id": "BcqTBA",
   "code_sample": "curl -X QUERY -H 'Authorization: [Filtered]' https://api-qa.redspur.com/api/categories",
   "sequence": [
     {
@@ -16,14 +16,14 @@
         "Accept": "*/*",
         "Connection": "keep-alive",
         "Authorization": "[Filtered]",
-        "X-Schemathesis-TestCaseId": "cbloDm",
+        "X-Schemathesis-TestCaseId": "BcqTBA",
         "Content-Length": "0"
       },
       "response": {
         "status_code": 404,
         "headers": {
           "server": "nginx/1.28.3 (Ubuntu)",
-          "date": "Mon, 09 Nov 2026 07:11:20 GMT",
+          "date": "Fri, 13 Nov 2026 04:22:44 GMT",
           "content-type": "application/json; charset=utf-8",
           "content-length": "91",
           "connection": "keep-alive",
@@ -44,7 +44,7 @@
       ],
       "meta": {
         "generation": {
-          "time": 1.3699987903237343e-05,
+          "time": 7.800001185387373e-06,
           "mode": "negative"
         },
         "components": {},

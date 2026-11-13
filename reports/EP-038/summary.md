@@ -1,76 +1,80 @@
 # EP-038 - GET /listings/:id - evidence summary
 
+Sheet title: "Verify a draft or removed listing is not visible to any user other than its owner or an Admin." Used in App: YES (Flow 3, 18, 26).
+
+No verdict was overridden. Previous results are kept only in `reports\EP-038\results-history.md`; the workbook shows the latest result with the real Actual status / Actual response.
+
 ## Runs
 
-| Run ID | Role | Auth | Status | Spec version/hash | Fixtures states | Execution errors |
-|---|---|---|---|---|---|---|
-| RUN-20261109-150351-EP-038-user | user | ok (otp) | completed | 1.0 / `8c58e57f...` | active, approved, draft, inactive, pending_approval, sold | 0 |
-| RUN-20261109-150440-EP-038-admin | admin | ok (password) | completed | 1.0 / `8c58e57f...` (same hash) | active, approved, draft, inactive, pending_approval, sold | 0 |
-| RUN-20261109-150516-EP-038-anon | anon | anonymous-explicit | completed | 1.0 / `8c58e57f...` (same hash) | active, approved, draft, inactive, pending_approval, sold | 0 |
+| run id | role | auth | status | spec version | errors |
+|---|---|---|---|---|---|
+| RUN-20261112-225526-EP-038-user | user | ok | completed | 1.0 | 0 |
+| RUN-20261112-225607-EP-038-admin | admin | ok | completed | 1.0 | 0 |
+| RUN-20261112-225642-EP-038-anon | anon | anonymous-explicit | completed | 1.0 (sha256 8c58e57fc59f) | 0 |
 
-All three runs completed, 0 execution errors, identical spec hash across roles. No fixtures were ever provided in `rejected`, `reserved`, or soft-deleted (`deletedAt` set) states for any role — this is the single prerequisite gap driving all 8 BLOCKED verdicts.
+- The tally lists RUN-20261109-195646-EP-038-admin as unreadable (JSONDecodeError). It was skipped and is not evidence.
+- No run is flagged as rate-limited.
+- Each of the three runs made 45 requests; GET statuses `{'200': 38, '404': 4}` per role.
+- Cases needing a soft-deleted resource are BLOCKED: "no fixture resource in state 'soft_deleted'".
 
-## Verdict counts (PASS 21 / FAIL 11 / BLOCKED 8 / NOT RUN 1) — what they do and do not prove
+## Verdict counts and what they prove
 
-- **PASS (21)** — proves: status-code-in-range checks succeeded (`not_a_server_error`, `max_response_time`), and for a handful of cases a specific business-rule status (200/404) matched the code's documented behavior (e.g. TC-038-011/012 owner/admin see `draft`; TC-038-019 anon gets 404 on `pending_approval`; TC-038-048 nonexistent id returns 404 with `message: 'Listing not found'`, TC-038-056 confirms `offerCount` absent). **PASS never proves response-schema conformance here** — every 200-status case that would need schema validation is BLOCKED instead (see below), because the spec declares no schema for the 200 response (`TC-038-003/006/010`, verdicts.json detail: `"spec declares no schema for GET /listings/{id} -> 200; 'response_schema_conformance' passed vacuously"`). A 200 status alone does not confirm field content, ownership-gating correctness beyond the specific assertion tested, or absence of other dead fields.
-- **FAIL (11)** — see grouped root causes below. Two of the eleven (TC-038-013, TC-038-016) are business-rule mismatches against the sheet's literal title, not necessarily app defects — the audit records these as recorded requirement conflicts (draft-visibility) and an unclear case (inactive-visibility), not settled bugs.
-- **BLOCKED (8)** — proves nothing either way; prerequisite fixtures/spec content were missing. 3 are schema-conformance checks blocked by the spec's lack of a 200 schema; 5 are business/coverage cases blocked by missing `rejected`/`reserved`/soft-deleted fixture resources.
-- **NOT RUN / no evidence (1)** — TC-038-057 (sending a foreign-resource-type id, e.g. an order id, as the `:id` path param) was never exercised by any of the three runs; no scenario in any evidence.json matches it.
+**Workbook after applying the evidence (tally):** 69 cases, BLOCKED 19, FAIL 10, NOT RUN 10, PASS 30; 55 cases have a match spec. (Before apply the tally read PASS 29 / NOT RUN 11; the one change is TC-038-069, NOT RUN -> PASS in the admin run.)
+
+By category (tally before apply): Audit-derived BLOCKED 1, FAIL 1, NOT RUN 6, PASS 1; Business Rule BLOCKED 10, NOT RUN 2, PASS 15; Functional BLOCKED 2, PASS 8; Negative BLOCKED 1, NOT RUN 1, PASS 1; Schema/Contract BLOCKED 2, FAIL 3, PASS 1; Schemathesis BLOCKED 3, FAIL 6, PASS 3; Security/Auth NOT RUN 2.
+
+`verdicts.md` counts (PASS 28 | FAIL 12 | BLOCKED 8 | NOT RUN (partial) 0 | no matching evidence 4) are per-verdict for this run set only: a case appears with the best verdict across roles, and the workbook counts also include earlier results of cases not retested. They are different views, not a sync error.
+
+**Failing requests per role and code (tally):** ST204 (unsupported_method): admin 1, anon 1, user 1. ST103 (status_code_conformance): admin 4, anon 4, user 4.
+
+**What the verdicts prove (verdicts.md):**
+- FAIL TC-038-001, 004, 007, 036: one 405 request per role (ST204).
+- FAIL TC-038-034, 035: judged on spec 1.0, no request needed.
+- FAIL TC-038-008, 037, 038: 42 requests with statuses 200 and 404, consistent with ST103 (404 not documented in the spec; inferred, verdicts.md states no reason).
+- FAIL TC-038-013 (draft), 016 (inactive), 023 (rejected) as anon: each returned 200, so those states are visible to anonymous callers. The audit says this matches the code and BRI-44; all three are Conflict/Unclear against the sheet title.
+- PASS cases (e.g. TC-038-019, 048, 068: 404 as anon) prove only the observed status and the match spec. A 200 does not prove response content.
 
 ## Evidence gaps and execution errors
-
-- No execution errors in any of the 3 runs (manifest `execution_errors: []` for user/admin/anon).
-- Auth for user and admin roles succeeded (`bootstrap_phase: success`); anon is explicitly unauthenticated by design (role under test) — not a failure.
-- Fixture snapshot (`dda4cda766a8...`, identical across all 3 runs) only contains `active, approved, draft, inactive, pending_approval, sold` — **no `rejected`, no `reserved`, no soft-deleted (`deletedAt`) listing** was ever available to any role. This blocks: TC-038-023 (rejected hidden, anon), TC-038-052 (rejected owner-view, user), TC-038-024/047 (soft-deleted hidden, anon/admin), TC-038-055 (reserved visible, anon).
-- Response-schema conformance could not be checked for any 200 response in any role (TC-038-003/006/010) because the OpenAPI spec declares no schema for the 200 response on this operation (confirmed directly by spec-only checks TC-038-034/035, both FAIL as "spec does not declare 404 response" / "does not declare schema for 200").
-- TC-038-057 (foreign-type id as path param) has no matching executed scenario in any run — Schemathesis's fuzzing did not happen to produce this case; needs a manual/other-method test.
+- Execution errors: 0 in all three runs.
+- **No response schema for 200:** TC-038-003, 006, 010 BLOCKED ("response_schema_conformance passed vacuously"). Body shape is not verified by Schemathesis.
+- **Soft-deleted fixture missing:** TC-038-024, 047, 061, 062, 063 BLOCKED.
+- **No evidence for four cases:** TC-038-025, 053, 057, 060 ("no matching scenario executed").
+- Only 200, 404 and the 405 for the unsupported-method request were observed; 400/401/403/5xx were not.
+- Not observed: expired/invalid JWT (TC-038-051), cache cross-viewer ordering.
+- Cases for another execution method: TC-038-026 to 033, 041, 045, 049, 050, 051, 054, 058, 066, 067.
 
 ## Fields / params to remove or fix
 
-| # | Item | Kind | Source (verdict/ST code + audit) | Evidence | Recommendation | Confidence |
-|---|---|---|---|---|---|---|
-| 1 | `id` path param | request param | N/A — used in every call path | audit "Declared Contract", `listings.controller.ts:376-377` | KEEP | high |
-| 2 | Only `pending_approval` is gated from non-owner/non-admin; `draft`/`rejected`/`inactive` return full DTO to anyone | business-rule branch | TC-038-013 FAIL (anon, "status 200 expected in [404]"), TC-038-016 FAIL (anon), audit Finding #1 + Source agreement matrix row 1 ("Conflict — sheet vs. code+tests+domain doc") | `listings.service.ts:786` gate only checks `HIDDEN_FROM_PUBLIC_STATUS === 'pending_approval'`; intentionally tested at `listings.service.spec.ts:965-972` | Potential defect — **clarify requirement first** (is sheet title wrong, or is BRI-44 wrong). Do not FIX CODE or REMOVE until PO/QA resolves the conflict; if sheet is wrong, FIX SPEC/sheet title | high (conflict is clearly documented; which side is "right" is not ours to decide) |
-| 3 | Soft-deleted listing 404s for **everyone including owner/Admin** (not just non-owners) | business-rule branch | TC-038-024/047 BLOCKED (no soft-deleted fixture to actually run this), audit Finding #2 + Source agreement matrix row 4 ("Conflict + implicit spec-gap") | `listings.repository.ts:692-704` (`NOT_DELETED` filter applies before any role check) | Potential defect — clarify first. Cannot be confirmed FAIL/PASS without a soft-deleted fixture (currently BLOCKED, not tested) | medium (code path confirmed by audit/code read, but not exercised live in any of these 3 runs) |
-| 4 | 200 response has no documented schema in spec | response/contract | TC-038-035 FAIL (`SPEC:200-schema`), TC-038-003/006/010 BLOCKED as a result, audit Finding #9 | verdicts.json: `"spec 1.0: GET /listings/{id} does NOT declare schema for 200"` | FIX SPEC — add a response schema so schema-conformance can actually run instead of passing vacuously | high |
-| 5 | 404 response not documented in spec | response/contract | TC-038-034 FAIL (`SPEC:404-documented`), TC-038-008/037/038 FAIL (ST103 status_code_conformance) | verdicts.json: `"spec 1.0: GET /listings/{id} does NOT declare response for 404"` | FIX SPEC — document the 404 case (two real reasons: not-found id, hidden `pending_approval`) | high |
-| 6 | No `security`/auth requirement documented in spec for this route | auth/contract | audit Finding #9 / Source agreement matrix row 5 | `optional-jwt-auth.guard.ts` behaviour vs 0 `security` occurrences in openapi.json (audit) | FIX SPEC — document optional-bearer auth | medium (spec-wide pattern, not unique to this endpoint) |
-| 7 | `ratingAvg`, `reviewCount` returned but unread by any client off this endpoint | response field | audit Finding #3 (needs_other_method TC-038-028) | `listings.service.ts:291-292`; grep across mobile/web types found no reads off this DTO | MAKE OPTIONAL / VERIFY WITH OTHER CLIENT FIRST — do not REMOVE outright (shared serializer with other endpoints) | medium |
-| 8 | `watchersCount` returned but unread (separate `/listings/:id/watchers` view-count flow supplies the UI instead) | response field | audit Finding #4 (needs_other_method TC-038-029) | `listingsApi.ts:62` declares it, no `.watchersCount` read in prod code | MAKE OPTIONAL / VERIFY WITH OTHER CLIENT FIRST | medium |
-| 9 | `likeCount`, `commentCount` required on shared `Product` type but unread off a listing object | response field | audit Finding #5 (needs_other_method TC-038-030) | `types\domain.ts:76-77`; zero non-test reads | KEEP (shared type with browse/search/feed `toListingListDto` — audit explicitly says not unique to this endpoint) | medium |
-| 10 | 405 on unsupported method missing required `Allow` header | protocol/framework | TC-038-001 (user), TC-038-004 (admin), TC-038-007/036 (anon) all FAIL — `"header allow present -> absent"` | verdicts.json assertions for all four cases | FIX CODE — framework-level (Nest/Express default), low severity but affects all 3 roles consistently | high |
+| # | Item | Kind | Source | Recommendation | Confidence |
+|---|---|---|---|---|---|
+| 1 | Path param `id` | param | audit | KEEP | high |
+| 2 | `ratingAvg`, `reviewCount` | response field | audit finding 3 | VERIFY WITH OTHER CLIENT FIRST; do not remove | medium |
+| 3 | `watchersCount` | response field | audit finding 4 | VERIFY WITH OTHER CLIENT FIRST | medium |
+| 4 | `likeCount`, `commentCount` | response field | audit finding 5 (shared list DTO) | KEEP | medium |
+| 5 | `negotiable`, `minOfferPercent`, `attributes[]`, `shippingTier`, `videoUrl`, `stock`, `subcategoryId`, `typeId` | response fields | audit "Looks unused but keep" | KEEP | high |
+| 6 | 404 and 200 schema undocumented | spec | ST103; TC-038-034, 035, 003, 006, 010 | FIX SPEC | high |
+| 7 | Optional auth not declared | spec | TC-038-067; audit finding 9 | FIX SPEC | high |
+| 8 | TRACE / unsupported-method 405 | behaviour | ST204 | VERIFY intended behaviour first | low |
+| 9 | `ResumeDraft.tsx` calls without a token | client | audit finding 6 | VERIFY WITH OTHER CLIENT FIRST | high |
 
-## Defects (see bug report)
+No REMOVE recommendation is made.
 
-See BUG-EP038-01 through 03 below.
+## Defects (see bugs.md)
+Only spec/documentation gaps are confirmed, plus potential-defect items. Draft, inactive and rejected listings are readable anonymously: conflicts with the sheet title, matches code and BRI-44.
 
 ## Unresolved expectations and conflicts
+TC-038-013 (draft, Conflict), 016 (inactive, Unclear), 023 (rejected, Conflict), 025 (Unclear), 027 (soft-deleted 404 for everyone, Conflict), 047 (admin on soft-deleted, Conflict), 051 (expired token, Conflict), 063 (removed listing visible to owner, Conflict), 067 (spec declares no auth, Conflict). Sheet vs code: the code hides only `pending_approval` (`listings.service.ts:60,786`); no `removed` status exists (`schema.prisma:36-45`); soft-delete returns 404 for everyone (`listings.repository.ts:692-704`).
 
-- **TC-038-013** (Draft listing NOT visible to anonymous) — **Conflict**. Sheet title says draft must be hidden from non-owner/non-admin; code (`listings.service.ts:786`, gated only on `pending_approval`) and existing unit test (`listings.service.spec.ts:965-972`) say draft is intentionally public. A FAIL here is a "potential defect — clarify first," not a confirmed bug.
-- **TC-038-016** (Inactive listing hidden from anonymous, per sheet intent) — **Unclear**. Same code path as above; sheet title doesn't name `inactive` explicitly but implies it via "draft or removed." Needs PO/QA clarification before treating as a defect.
-- **TC-038-023** (Rejected listing not visible to non-owner/non-admin) — **Conflict**, and also BLOCKED (no `rejected` fixture was available to actually execute it in any run).
-- **TC-038-047** (Admin opens a soft-deleted listing, Flow 26) — **Conflict**, and also BLOCKED (no soft-deleted fixture available). Sheet title implies admin should still see a "removed" listing; code 404s for admin too (`listings.repository.ts:692-704`).
+## Open High findings from the independent case review (testcases\reviews\EP-038-review.md) - verdict REWORK
+1. TC-061/062 vs TC-027/047/063: same soft-deleted state judged Confirmed and Conflict; TC-047 matches [200], TC-062 matches [404].
+2. TC-059/060/026 vs TC-013/016: draft/inactive/rejected for anon judged three ways.
+3. Missing security case: shared `listing:<id>` cache (owner GET pending_approval, then guest GET, expect 200 then 404).
+4. "Confirmed" claimed on code/existing-test backing only: TC-049, 053, 055, 056, 064, 065, 066, 068, 069.
 
-These four cases must not be reported as confirmed app defects until the sheet title vs. BRI-44/BRI-366 product-decision conflict is resolved by QA/PO, per the audit's Source agreement matrix.
+Until fixed, verdicts on TC-013, 016, 023, 047, 059, 062 and others named above are not authoritative.
 
 ## Cases needing another execution method
-
-From verdicts.json `needs_other_method` (16 legacy cases, no Schemathesis execution path):
-- TC-038-025, 026, 027 — visibility-matrix narrative cases already covered by executed BR cases above; need no separate action, but flagged as not independently automatable.
-- TC-038-028, 029, 030, 050 — dead-field static review (ratingAvg/reviewCount, watchersCount, likeCount/commentCount, general "tracked not tested") — needs static code review, not Schemathesis.
-- TC-038-031 — `ResumeDraft.tsx` no-token call depending on draft staying ungated — needs mobile client test, not API-only.
-- TC-038-032, 033, 041, 045 — additional call-site coverage (Offers item cards, seller-web edit page) — needs client-side/manual verification per audit Findings #7/#8.
-- TC-038-049 — confirming all fields the apps actually read are present — needs cross-referencing client code, not a Schemathesis assertion.
-- TC-038-051 — expired/invalid Bearer token behavior — needs a manual request with a crafted expired token.
-- TC-038-053 — cross-account non-owner access to a `pending_approval` listing — needs a second seller account fixture.
-- TC-038-054 — cache-staleness after admin approval — needs a sequential two-step test (approve then re-fetch), not a single fuzzed request.
-- TC-038-058 — unknown/extra query params ignored — flagged explicitly for **Postman**, not a Schemathesis case.
+TC-038-026 to 033, 041, 045, 049, 050, 051, 054, 058, 066, 067. Review also lists missing cases: cache cross-viewer leak, malformed JWT, private seller fields on the anon response, malformed ids, HEAD/OPTIONS.
 
 ## Could not verify
-
-- Whether soft-deleted listings genuinely 404 for owner/Admin as the audit's static code read claims (`listings.repository.ts:692-704`) — BLOCKED in all 3 runs (TC-038-024, 047) for lack of a soft-deleted fixture. Code-level claim only, not live-evidence-backed for this execution.
-- Whether `rejected` listings are treated like `draft`/`inactive` (public) in a live request — BLOCKED (TC-038-023, 052), no `rejected` fixture in any run.
-- Whether `reserved` listings are visible to anon — BLOCKED (TC-038-055), no `reserved` fixture.
-- Response-schema conformance for any 200 response, for any role — BLOCKED for all three (TC-038-003/006/010), spec declares no schema.
-- TC-038-057 (foreign-resource-type id as path param, security/negative case) — no evidence in any of the 3 runs; not exercised.
-- Whether a dynamic/spread consumer in any client reads `ratingAvg`/`reviewCount`/`watchersCount`/`likeCount`/`commentCount` — audit explicitly flags this as unverifiable by static grep alone (audit "Could not verify" section).
+Response content of the 200 body (no schema); soft-deleted behaviour for owner/admin (no fixture); cache gate across roles and expired-token handling; the reason behind TC-038-008's FAIL (inferred). Code locations come from the audit and were not re-read by the triager.

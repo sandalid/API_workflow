@@ -1,0 +1,46 @@
+{
+ "corrections": [
+  {
+   "ep": "EP-033",
+   "tc_id": "TC-033-011",
+   "set": {
+    "match": {
+     "method": "TRACE",
+     "path": "/categories",
+     "role": "anon",
+     "assertions": [
+      {"type": "status", "in": [404, 405]}
+     ]
+    },
+    "expected_status": "404 or 405",
+    "expected": "404 or 405 (Nest default for unmatched route+method); no confirmed Allow header",
+    "response_assertions": null
+   },
+   "reason": "Independent review EP-033: audit's own suggested scenario #7 hedges 404/405 (Nest default), nothing in this codebase confirms an Allow header is emitted; loosen status to match TC-033-012's hedge and drop the unconfirmed Allow-header assertion"
+  },
+  {
+   "ep": "EP-033",
+   "tc_id": "TC-033-009",
+   "set": {
+    "requirement_status": "Assumed"
+   },
+   "reason": "Independent review EP-033: expected_source is Backend code only (admin.service.ts:614-624) with no requirement/ticket/doc backing; code behaviour alone is evidence of actual behaviour, not a confirmed requirement"
+  },
+  {
+   "ep": "EP-033",
+   "tc_id": "TC-033-010",
+   "set": {
+    "requirement_status": "Assumed"
+   },
+   "reason": "Independent review EP-033: expected_source is Backend code only (admin.service.ts:614-624) with no requirement/ticket/doc backing; code behaviour alone is evidence of actual behaviour, not a confirmed requirement"
+  },
+  {
+   "ep": "EP-033",
+   "tc_id": "TC-033-014",
+   "set": {
+    "requirement_status": "Assumed"
+   },
+   "reason": "Independent review EP-033: expected_source is Backend code only (app.module.ts:57-59) with no ticket/doc backing the specific 100/min figure as a deliberate confirmed decision"
+  }
+ ]
+}

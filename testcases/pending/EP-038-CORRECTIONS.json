@@ -1,0 +1,169 @@
+{
+ "corrections": [
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-049",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-053",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-055",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-056",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-059",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-060",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-061",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-062",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-064",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-065",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-066",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-069",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-026",
+   "set": {
+    "requirement_status": "Assumed",
+    "expected_source": "QA suggestion"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-068",
+   "set": {
+    "requirement_status": "Assumed"
+   },
+   "reason": "Independent review EP-038 (testcases/reviews/EP-038-review.md): no requirement source, code/tests are evidence of behaviour only; BRI-781 not cited as source"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-026",
+   "set": {
+    "role": "anon"
+   },
+   "reason": "review finding 13: role must match the scenario (anon)"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-023",
+   "set": {
+    "role": "anon"
+   },
+   "reason": "review finding 13: Role column must equal match.role"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-024",
+   "set": {
+    "role": "anon"
+   },
+   "reason": "review finding 13: Role column must equal match.role"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-025",
+   "set": {
+    "role": "user"
+   },
+   "reason": "review finding 13: Role column must equal match.role"
+  },
+  {
+   "ep": "EP-038",
+   "tc_id": "TC-038-066",
+   "set": {
+    "unchecked": "Needs a status-change step: PATCH /listings/:id (high-value threshold) or PATCH /listings/:id/status can move a live listing to pending_approval (KB BR-LISTINGS-006/008); use a disposable listing"
+   },
+   "reason": "review finding 6: previous blocked reason was wrong"
+  }
+ ]
+}

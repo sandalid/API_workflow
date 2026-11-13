@@ -1,0 +1,33 @@
+{
+  "_readme": "Real QA ids injected as OpenAPI examples. Key='METHOD /openapi/path'. _states labels ids for the visibility matrix. Owner = ST_USER account. No rejected / soft-deleted listing exists on QA yet.",
+  "_states": {
+    "cmv95z5n803dl12gb9g5kce0w": "active",
+    "cmw4tl67a006wu4pw9vcqawqg": "approved",
+    "cmw4i2rr3001xu4pw4i09y143": "sold",
+    "cmvarpj0u0067armb87izrkyx": "inactive",
+    "cmuxnp1db03jyh9rr46n50hqp": "pending_approval",
+    "cmugqcdly005819u5w0374t7u": "draft"
+  },
+  "GET /listings/{id}": {
+    "ep": "EP-038",
+    "path": {
+      "id": [
+        "cmv95z5n803dl12gb9g5kce0w",
+        "cmw4tl67a006wu4pw9vcqawqg",
+        "cmw4i2rr3001xu4pw4i09y143",
+        "cmvarpj0u0067armb87izrkyx",
+        "cmuxnp1db03jyh9rr46n50hqp",
+        "cmugqcdly005819u5w0374t7u"
+      ]
+    }
+  },
+  "_owners": {
+    "cmv95z5n803dl12gb9g5kce0w": "user",
+    "cmw4tl67a006wu4pw9vcqawqg": "user",
+    "cmw4i2rr3001xu4pw4i09y143": "user",
+    "cmvarpj0u0067armb87izrkyx": "user",
+    "cmuxnp1db03jyh9rr46n50hqp": "user",
+    "cmugqcdly005819u5w0374t7u": "user"
+  },
+  "_owners_readme": "Resource owner role per id. All six listings were read from /sellers/me/listings of the ST_USER account, so owner = user. Used by the result matcher for ownership scenarios."
+}

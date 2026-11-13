@@ -1,0 +1,367 @@
+{
+ "ep": "EP-038",
+ "curation": "curated-draft: written from the audit and the verified evidence, pending review by the endpoint owner (then run: golden.py approve EP-038 --by NAME)",
+ "audit": {
+  "required_sections": [
+   "## Findings",
+   "## Test design inputs",
+   "## Source agreement matrix",
+   "## Suggested test scenarios"
+  ],
+  "must_mention": [
+   {
+    "id": "gate-hides-only-pending",
+    "any_of": [
+     "HIDDEN_FROM_PUBLIC_STATUS",
+     "only\\s+(blocks|hides|gates)[^.]{0,60}pending_approval"
+    ],
+    "why": "the visibility gate hides ONLY pending_approval"
+   },
+   {
+    "id": "draft-returned-publicly",
+    "any_of": [
+     "draft[^.]{0,140}(returned|public|visible|ungated|any anonymous)"
+    ],
+    "why": "draft listings are readable by anonymous/buyer callers"
+   },
+   {
+    "id": "soft-delete-404-for-everyone",
+    "any_of": [
+     "soft-?delet[^.]{0,220}404",
+     "NOT_DELETED"
+    ],
+    "why": "soft-deleted listings 404 even for owner/admin"
+   },
+   {
+    "id": "no-removed-status",
+    "any_of": [
+     "No\\s+`removed`\\s+status",
+     "no\\s+`removed`\\s+value"
+    ],
+    "why": "there is no 'removed' status in the domain"
+   },
+   {
+    "id": "optional-auth-guard",
+    "any_of": [
+     "OptionalJwtAuthGuard"
+    ],
+    "why": "the route uses an optional-auth guard (anonymous allowed)"
+   },
+   {
+    "id": "unused-ratingAvg",
+    "any_of": [
+     "ratingAvg"
+    ],
+    "why": "unused response field finding"
+   },
+   {
+    "id": "unused-watchersCount",
+    "any_of": [
+     "watchersCount"
+    ],
+    "why": "unused response field finding"
+   },
+   {
+    "id": "unused-likeCount",
+    "any_of": [
+     "likeCount"
+    ],
+    "why": "unused response field finding"
+   },
+   {
+    "id": "resume-draft-no-token",
+    "any_of": [
+     "ResumeDraft"
+    ],
+    "why": "app call site that sends no token and depends on drafts being ungated"
+   },
+   {
+    "id": "offers-flow-call-sites",
+    "any_of": [
+     "MakeOffer",
+     "OfferThread"
+    ],
+    "why": "call sites the sheet's Usage Note does not list"
+   },
+   {
+    "id": "spec-gap",
+    "any_of": [
+     "no\\s+404",
+     "no\\s+response\\s+schema"
+    ],
+    "why": "OpenAPI documents no 404 and no response schema"
+   },
+   {
+    "id": "sheet-mismatch",
+    "any_of": [
+     "Mismatch",
+     "does not match the code"
+    ],
+    "why": "the sheet's behavioural claim does not match the implementation"
+   }
+  ],
+  "must_not_claim": [
+   {
+    "id": "soft-deleted-visible-to-owner",
+    "pattern": "soft-?deleted[^.\n]{0,120}(is visible to|returns? 200 (to|for)) (the )?(owner|admin)",
+    "why": "code returns 404 for everyone, including owner and admin"
+   },
+   {
+    "id": "removed-status-exists",
+    "pattern": "(?<![Nn]o )(?<![Nn]ot )`removed`\\s+(status|value)\\s+(exists|is defined)",
+    "why": "no 'removed' status exists"
+   }
+  ],
+  "must_cite": [
+   {
+    "id": "listings.controller.ts:findById",
+    "file": "listings.controller.ts",
+    "lines": [
+     373,
+     378
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "optional-jwt-auth.guard.ts:OptionalJwtAuthGuard",
+    "file": "optional-jwt-auth.guard.ts",
+    "lines": [
+     1,
+     17
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "listings.service.ts:ListingsService.findById",
+    "file": "listings.service.ts",
+    "lines": [
+     769,
+     791
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "listings.service.ts:LIVE_STATUSES",
+    "file": "listings.service.ts",
+    "lines": [
+     45,
+     63
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "listings.service.ts:toListingDto",
+    "file": "listings.service.ts",
+    "lines": [
+     240,
+     306
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "listings.service.ts:mapSeller",
+    "file": "listings.service.ts",
+    "lines": [
+     215,
+     232
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "listings.service.ts:mapStatus",
+    "file": "listings.service.ts",
+    "lines": [
+     234,
+     238
+    ],
+    "tolerance": 15
+   },
+   {
+    "id": "listings.repository.ts:findById",
+    "file": "listings.repository.ts",
+    "lines": [
+     689,
+     704
+    ],
+    "tolerance": 15
+   }
+  ],
+  "baseline_citations": {
+   "total": 116,
+   "FAIL": 1,
+   "WARN": 14
+  }
+ },
+ "design": {
+  "required_dimensions": [
+   {
+    "role": "user",
+    "method": "GET",
+    "state": "active",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "user",
+    "method": "GET",
+    "state": "approved",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "user",
+    "method": "GET",
+    "state": "sold",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "admin",
+    "method": "GET",
+    "state": "active",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "admin",
+    "method": "GET",
+    "state": "approved",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "admin",
+    "method": "GET",
+    "state": "sold",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "anon",
+    "method": "GET",
+    "state": "active",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "anon",
+    "method": "GET",
+    "state": "approved",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "anon",
+    "method": "GET",
+    "state": "sold",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "user",
+    "method": "GET",
+    "state": "draft",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "admin",
+    "method": "GET",
+    "state": "draft",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "user",
+    "method": "GET",
+    "state": "inactive",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "admin",
+    "method": "GET",
+    "state": "inactive",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "user",
+    "method": "GET",
+    "state": "pending_approval",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "admin",
+    "method": "GET",
+    "state": "pending_approval",
+    "status": [
+     200
+    ]
+   },
+   {
+    "role": "anon",
+    "method": "GET",
+    "state": "pending_approval",
+    "status": [
+     404
+    ]
+   },
+   {
+    "role": "anon",
+    "method": "GET",
+    "state": "soft_deleted",
+    "status": [
+     404
+    ]
+   },
+   {
+    "role": "anon",
+    "method": "GET",
+    "state": "draft",
+    "status": [
+     200
+    ]
+   }
+  ],
+  "required_checks": [
+   {
+    "id": "trace-405-needs-allow-header",
+    "assertion": "header",
+    "name": "allow"
+   },
+   {
+    "id": "schema-conformance-contract-case",
+    "assertion": "check",
+    "name": "response_schema_conformance"
+   },
+   {
+    "id": "spec-documents-404",
+    "assertion": "spec_declares",
+    "status": 404
+   },
+   {
+    "id": "nonexistent-id-message",
+    "assertion": "body_json",
+    "path": "message"
+   }
+  ],
+  "min_cases": 30,
+  "max_cases": 120
+ }
+}

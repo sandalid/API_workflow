@@ -152,11 +152,15 @@ def eval_assertion(a, it, run):
             why = "response body truncated" if body.get("truncated") else "response body is not JSON or was not recorded"
             return {"performed": False, "satisfied": None, "reason": why, "kind": "coverage", "detail": ""}
         found, val = get_path(body["json"], a["path"]); op = a["op"]
+        in_values = a.get("value")
+        if not isinstance(in_values, (list, tuple, set)): in_values = []
+        pattern = a.get("value", "")
+        matches_ok = found and op == "matches" and isinstance(val, str) and isinstance(pattern, str) and re.search(pattern, val) is not None
         ok = {"exists": found, "absent": not found,
               "equals": found and val == a.get("value"), "not_equals": found and val != a.get("value"),
               "type": found and _type_name(val) == a.get("value"),
-              "in": found and val in (a.get("value") or []),
-              "matches": found and isinstance(val, str) and re.search(a.get("value", ""), val) is not None}[op]
+              "in": found and val in in_values,
+              "matches": matches_ok}[op]
         return {"performed": True, "satisfied": ok, "detail": f"body.{a['path']} {op} {a.get('value', '')} -> {'found ' + repr(val)[:60] if found else 'missing'}"}
     if t == "check":
         name = a["name"]; rec = next((c for c in it.get("checks", []) if c["name"] == name), None)
@@ -222,6 +226,20 @@ def select(match, run):
     return matched, excluded, errored, None
 
 
+def actual_response(matched, spec_only=False, limit=600):
+    """what the API really answered: status code(s) + response body of one sample per distinct status"""
+    if spec_only: return "n/a", "(spec check - judged on the OpenAPI snapshot, no request sent)"
+    seen, parts = set(), []
+    for it in matched:
+        resp = it.get("response") or {}; st = resp.get("status")
+        if st in seen or st is None: continue
+        seen.add(st); body = resp.get("body")
+        txt = body if isinstance(body, str) else json.dumps(body, ensure_ascii=False) if body is not None else "(empty body)"
+        parts.append(f"[{st}] {txt}"[:limit])
+        if len(parts) == 3: break
+    return ", ".join(str(c) for c in sorted(seen)) or None, "\n".join(parts) or None
+
+
 def evaluate_case(case, run):
     """-> verdict dict for one case against one run (kind: executed|blocked|partial|none)"""
     m = json.loads(case["match"]) if isinstance(case["match"], str) else case["match"]
@@ -278,8 +296,10 @@ def evaluate_case(case, run):
                 if not any((i["path_params"] or {}).get(param, (i["query"] or {}).get(param)) in ids_ for i in matched):
                     unchecked.append(f"state '{st}' was not exercised by any matching request")
     if errored: unchecked.append(f"{len(errored)} matching request(s) ended in execution errors: {err_txt}")
+    act_status, act_resp = actual_response(matched, spec_only)
     out = dict(base, evidence=evid, assertions=[{"a": p["assertion"], "state": p["state"], "detail": p["detail"]} for p in per],
-               actual="; ".join(p["detail"] for p in (viol or per) if p["detail"])[:500])
+               actual="; ".join(p["detail"] for p in (viol or per) if p["detail"])[:500],
+               actual_status=act_status, actual_response=act_resp)
     if viol: return dict(out, kind="executed", result="FAIL", unchecked="; ".join(unchecked) or None)
     if not unchecked: return dict(out, kind="executed", result="PASS", unchecked=None)
     if any(p["state"] in ("unperformed", "partial") and p["kind"] == "prereq" for p in per):
@@ -333,7 +353,11 @@ def map_runs(ep, cases, runs):
                                   "expected_source": "OpenAPI spec", "execution_method": "Schemathesis", "requirement_status": "Confirmed",
                                   "source": f"Schemathesis {ch.get('code') or ch['name']}", "result": "FAIL", "run_id": run["manifest"]["run_id"],
                                   "evidence": f"{run['manifest']['run_id']}; case {it['id']}; status {(it.get('response') or {}).get('status')}",
-                                  "actual": (ch.get("message") or "")[:300],
+                                  "actual_status": str((it.get("response") or {}).get("status")),
+                                  "actual_response": actual_response([it])[1] or (ch.get("message") or "")[:300],
+                                  "req_headers": "Authorization: Bearer <%s token>" % role if role != "anon" else "(none)",
+                                  "req_body": f"{it['method']} {it['uri']}",
+                                  "notes": (ch.get("message") or "")[:300],
                                   "match": {"method": it["method"], "path": it["path_template"], "role": role,
                                             "assertions": [{"type": "check", "name": ch["name"]}]}})
     errs = [dict(e, run_id=r["manifest"]["run_id"]) for r in runs for e in (r["manifest"].get("execution_errors") or [])]
@@ -363,7 +387,7 @@ def render_md(res):
     for v in res["verdicts"]:
         shown = v.get("result") if v["kind"] == "executed" else {"blocked": "BLOCKED", "partial": "NOT RUN (partial)", "none": "NOT RUN (no evidence)"}[v["kind"]]
         L.append(f"| {v['tc_id']} | {shown} | {v.get('run_id')} | {(v.get('evidence') or v.get('reason') or '')[:120]} {('- unchecked: ' + v['unchecked'][:160]) if v.get('unchecked') else ''} |")
-    if res["new_cases"]: L += ["", "## New evidence-backed cases (no existing case covered these failures)"] + [f"- {n['key']}: {n['actual'][:100]}" for n in res["new_cases"]]
+    if res["new_cases"]: L += ["", "## New evidence-backed cases (no existing case covered these failures)"] + [f"- {n['key']}: {(n.get('notes') or '')[:100]}" for n in res["new_cases"]]
     if res["needs_other_method"]: L += ["", "## Cases needing another execution method"] + [f"- {n['tc_id']} {n['scenario']} - {n['why']}" for n in res["needs_other_method"]]
     if res["unresolved_expectations"]: L += ["", "## Unresolved expectations (requirement conflict/unclear)"] + [f"- {n['tc_id']} {n['scenario']} ({n['status']})" for n in res["unresolved_expectations"]]
     if res["execution_errors"]: L += ["", "## Execution errors"] + [f"- {e['run_id']}: {e.get('kind')} {e.get('message', '')[:120]}" for e in res["execution_errors"]]

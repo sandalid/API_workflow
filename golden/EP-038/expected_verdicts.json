@@ -1,0 +1,207 @@
+{
+ "TC-038-001": {
+  "key": "ST:unsupported_method:user",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-002": {
+  "key": "ST:all-other:user",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-003": {
+  "key": "ST:schema-conformance:user",
+  "kind": "blocked",
+  "result": null
+ },
+ "TC-038-004": {
+  "key": "ST:unsupported_method:admin",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-005": {
+  "key": "ST:all-other:admin",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-006": {
+  "key": "ST:schema-conformance:admin",
+  "kind": "blocked",
+  "result": null
+ },
+ "TC-038-007": {
+  "key": "ST:unsupported_method:anon",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-008": {
+  "key": "ST:status_code_conformance:anon",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-009": {
+  "key": "ST:all-other:anon",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-010": {
+  "key": "ST:schema-conformance:anon",
+  "kind": "blocked",
+  "result": null
+ },
+ "TC-038-011": {
+  "key": "BR:draft-owner",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-012": {
+  "key": "BR:draft-admin",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-013": {
+  "key": "BR:draft-anon",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-014": {
+  "key": "BR:inactive-owner",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-015": {
+  "key": "BR:inactive-admin",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-016": {
+  "key": "BR:inactive-anon",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-017": {
+  "key": "BR:pending-owner",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-018": {
+  "key": "BR:pending-admin",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-019": {
+  "key": "BR:pending-anon",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-020": {
+  "key": "BR:public-states-user",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-021": {
+  "key": "BR:public-states-admin",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-022": {
+  "key": "BR:public-states-anon",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-023": {
+  "key": "BR:rejected-hidden",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-024": {
+  "key": "BR:soft-deleted-hidden",
+  "kind": "blocked",
+  "result": null
+ },
+ "TC-038-034": {
+  "key": "SPEC:404-documented",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-035": {
+  "key": "SPEC:200-schema",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-036": {
+  "key": "SPEC:405-allow",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-037": {
+  "key": "ST:status_code_conformance:user",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-038": {
+  "key": "ST:status_code_conformance:admin",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-038-039": {
+  "key": "CS:buyer-detail-guest",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-040": {
+  "key": "CS:buyer-detail-user",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-042": {
+  "key": "CS:seller-own-draft-token",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-043": {
+  "key": "CS:seller-own-inactive-pending",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-044": {
+  "key": "CS:resume-draft-no-token",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-046": {
+  "key": "CS:admin-detail-all-states",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-047": {
+  "key": "CS:admin-soft-deleted",
+  "kind": "blocked",
+  "result": null
+ },
+ "TC-038-048": {
+  "key": "CS:nonexistent-id-404",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-052": {
+  "key": "COV:rejected-owner-view",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-055": {
+  "key": "BR:reserved-visible",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-056": {
+  "key": "COV:offercount-absent",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-038-057": {
+  "key": "COV:foreign-type-id",
+  "kind": "none",
+  "result": null
+ }
+}

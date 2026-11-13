@@ -1,0 +1,61 @@
+{
+ "run_id": "RUN-20261109-195606-EP-038-user",
+ "ep": "EP-038",
+ "role": "user",
+ "started": "2026-11-09T19:56:07",
+ "finished": "2026-11-09T19:56:44",
+ "exit_code": 1,
+ "schemathesis_version": "4.32.7",
+ "seed": 12345,
+ "environment_host": "api-qa.redspur.com",
+ "flags": "-m schemathesis.cli run D:\\API_workflow\\schemathesis\\spec\\openapi.run.json --url https://api-qa.redspur.com/api --checks all --max-examples 25 --continue-on-failure --rate-limit 2/s --report junit,html,ndjson --report-dir D:\\API_workflow\\schemathesis\\results\\RUN-20261109-195606-EP-038-user --exclude-checks ignored_auth --seed 12345 --phases examples,coverage,fuzzing --include-path /listings/{id} --exclude-method POST --exclude-method PUT --exclude-method PATCH --exclude-method DELETE",
+ "stop_reason": "completed",
+ "phases": {
+  "probing": "success",
+  "schema_analysis": "success",
+  "auth_bootstrap": "success",
+  "examples": "success",
+  "coverage": "failure",
+  "fuzzing": "failure",
+  "stateful": "skip"
+ },
+ "auth": {
+  "role": "user",
+  "status": "ok",
+  "bootstrap_phase": "success",
+  "method": "otp",
+  "error": null
+ },
+ "execution_errors": [],
+ "interactions": 45,
+ "spec": {
+  "snapshot": "spec.snapshot.json",
+  "sha256": "8c58e57fc59f6c8d8e14fbc56d47f7ab06c9761b04bb014bde47cd5dfa9bbd6d",
+  "openapi_version": "3.0.0",
+  "info_version": "1.0",
+  "source_url_host": null
+ },
+ "fixtures": {
+  "snapshot": "fixtures.snapshot.json",
+  "sha256": "887cedbf0daa26b6f0193dffff98c30aaa2258a79bd13479dab994febe660982",
+  "states": [
+   "active",
+   "approved",
+   "draft",
+   "inactive",
+   "pending_approval",
+   "rejected",
+   "reserved",
+   "sold"
+  ],
+  "operations": [
+   "GET /listings/{id}"
+  ]
+ },
+ "evidence_file": "evidence.json",
+ "status": "completed",
+ "redaction": {
+  "ndjson_events_masked": 3,
+  "text_files_masked": 0
+ }
+}

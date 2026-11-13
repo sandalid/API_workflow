@@ -1,0 +1,57 @@
+{
+ "TC-032-001": {
+  "key": "ST:anon-200",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-032-002": {
+  "key": "BR:identical-response:user",
+  "kind": "partial",
+  "result": null
+ },
+ "TC-032-003": {
+  "key": "BR:identical-response:other",
+  "kind": "none",
+  "result": null
+ },
+ "TC-032-004": {
+  "key": "BR:identical-response:admin",
+  "kind": "partial",
+  "result": null
+ },
+ "TC-032-010": {
+  "key": "FN:all-fields-present",
+  "kind": "partial",
+  "result": null
+ },
+ "TC-032-011": {
+  "key": "ST:schema-conformance:anon",
+  "kind": "blocked",
+  "result": null
+ },
+ "TC-032-015": {
+  "key": "SEC:malformed-token",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-032-016": {
+  "key": "ST:unsupported_method:anon",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-032-017": {
+  "key": "ST:all-other:anon",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-032-018": {
+  "key": "ST:unsupported_method:user",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-032-019": {
+  "key": "ST:unsupported_method:admin",
+  "kind": "executed",
+  "result": "FAIL"
+ }
+}

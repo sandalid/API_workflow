@@ -3,26 +3,26 @@
   "method": "TRACE",
   "path_template": "/listings/{id}",
   "fingerprint": "d2e5de4a",
-  "case_id": "hWVOUz",
-  "code_sample": "curl -X TRACE https://api-qa.redspur.com/api/listings/cmugqcdly005819u5w0374t7u",
+  "case_id": "cTFpnS",
+  "code_sample": "curl -X TRACE https://api-qa.redspur.com/api/listings/cmw9cm73h00jnu4pws0bwjpvy",
   "sequence": [
     {
       "method": "TRACE",
-      "url": "https://api-qa.redspur.com/api/listings/cmugqcdly005819u5w0374t7u",
+      "url": "https://api-qa.redspur.com/api/listings/cmw9cm73h00jnu4pws0bwjpvy",
       "url_template": "https://api-qa.redspur.com/api/listings/{id}",
       "headers": {
         "User-Agent": "schemathesis/4.32.7",
         "Accept-Encoding": "gzip, deflate, zstd",
         "Accept": "*/*",
         "Connection": "keep-alive",
-        "X-Schemathesis-TestCaseId": "hWVOUz",
+        "X-Schemathesis-TestCaseId": "cTFpnS",
         "Content-Length": "0"
       },
       "response": {
         "status_code": 405,
         "headers": {
           "server": "nginx/1.28.3 (Ubuntu)",
-          "date": "Mon, 09 Nov 2026 09:35:24 GMT",
+          "date": "Thu, 12 Nov 2026 17:38:16 GMT",
           "content-type": "text/html",
           "content-length": "166",
           "connection": "close"
@@ -39,7 +39,7 @@
       ],
       "meta": {
         "generation": {
-          "time": 8.600007276982069e-06,
+          "time": 1.8099963199347258e-05,
           "mode": "negative"
         },
         "components": {
@@ -75,13 +75,13 @@
         "constants_draws": [],
         "raw_containers": {
           "PATH": {
-            "id": "cmugqcdly005819u5w0374t7u"
+            "id": "cmw9cm73h00jnu4pws0bwjpvy"
           }
         }
       },
       "path": "/listings/{id}",
       "path_parameters": {
-        "id": "cmugqcdly005819u5w0374t7u"
+        "id": "cmw9cm73h00jnu4pws0bwjpvy"
       },
       "query": {},
       "case_headers": {},

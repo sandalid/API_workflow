@@ -18,9 +18,12 @@ If saving fails with PermissionError the workbook is open in Excel: stop and say
 
 INPUT: EP id; the sheet row (Title = the stated requirement, Used in App?, Usage Note flows); audits\EP-NNN.md (the
 usage audit incl. "Test design inputs", "Source agreement matrix", "Suggested test scenarios"); schemathesis\fixtures.json
-(which resource states and owners exist); schemathesis\spec\openapi.json; existing cases (`cases EP-NNN --full`).
+(which resource states and owners exist); schemathesis\spec\openapi.pretty.json; existing cases (`cases EP-NNN --full`).
 
 HARD RULES
+- The audit's "## Knowledge base cross-check" section lists qa-knowledge rules/gaps already re-verified against code. Turn those into
+  cases (source "Documentation (qa-knowledge)" + the audit's code citation; key e.g. "KB:BR-LISTINGS-006"). A KB rule that is not
+  confirmed in that section, or that is marked conflict/superseded, never becomes a confident expectation: BLOCKED + `conflict`.
 - Do NOT invent business requirements. Every case states its Expected Source and Requirement Status:
   Confirmed (backed by a requirement source: sheet title, docs, ticket, product decision) | Assumed (QA suggestion) |
   Conflict (requirement vs spec vs code disagree) | Unclear. Code behaviour alone is evidence of actual behaviour,
@@ -63,6 +66,14 @@ Execution method: use "Schemathesis" only when evidence from a Schemathesis run 
   Anything needing a UI, a multi-step sequence, a second account that does not exist, or a state that cannot be created
   via fixtures => execution_method Playwright/Postman/Manual/E2E (no match) and, if a prerequisite is missing, BLOCKED
   with blocked_reason.
+A case that is BLOCKED only because a prerequisite is missing (no fixture resource in that state, no owner mapping) KEEPS
+execution_method Schemathesis and its full `match` spec: it is then BLOCKED automatically ("no fixture resource in state ...") and runs by
+itself as soon as the fixture exists. Only cases Schemathesis can never execute (multi-step, UI, a second account role the runner lacks, an
+expired token) get another execution method and no match. Never drop the match spec just because the data is not there yet.
+State names are snake_case and identical to the values in schemathesis\fixtures.json `_states` (draft, active, approved, pending_approval,
+rejected, inactive, sold, reserved); for a state that has no fixture yet use the same style (soft_deleted), never `soft-deleted`.
+Positive cases matter as much as negative ones: for every permission the requirement grants (e.g. "visible to its owner or an Admin") write
+the positive case per role and state it names, not only the denial cases.
 Known prerequisite gaps must be stated: e.g. no fixture resource in state 'rejected' / 'soft-deleted', no second buyer
 account, spec declares no schema for 200 (Contract case BLOCKED: "spec has no response schema").
 After `upsert`, read the output: if any case is rejected, fix it and re-run. Report TC IDs added, which are BLOCKED and
@@ -86,6 +97,15 @@ writes testcases\flows\FLOW-NN.json; verify earlier steps are still there.
 3. Items without a case: add a case (key "COV:<slug>") through the DESIGN rules above. Re-read and finish the table.
 4. Items the app never uses but the backend accepts: still add negative/security cases for unauthorized access and
    unexpected input; do not add cases for dead response fields (list them once, key "AUD:unused-in-app").
+
+NUMBERS: never count by hand. Any count you report (cases added, BLOCKED, coverage "X of Y") comes from the script output
+(`workbook.py upsert` report, `workbook.py cases EP-NNN`, or `python tools\verify_claims.py --tally EP-NNN`). Quote TC ids exactly;
+a script checks that every TC id, run id and bug id in testcases\coverage\EP-NNN.md exists.
+
+GOLDEN DRY RUN (only when the caller says so): you are being evaluated, not working on the real workbook. Design from the audit
+the caller names as if NO cases exist (do not call `cases`, do not read testcases\ or reports\), write the design JSON to the path
+you are given, validate it with `python testcases\workbook.py upsert <that file> --dry-run`, fix rejected cases once, and NEVER run
+`upsert` without --dry-run. Stage DESIGN only.
 
 REPORT (<= 12 lines): stage(s) run, cases added vs already present (kept untouched), BLOCKED cases + reasons, conflicts
 recorded, roles/fixtures needed to execute, flows touched (+ JSON files), coverage headline and gaps added.

@@ -1,0 +1,125 @@
+name: Scheduled QA API tests
+
+on:
+  schedule:
+    # GitHub schedules use UTC: 02:30/14:30 = 08:00/20:00 Asia/Colombo.
+    - cron: '30 2,14 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Scheduled and manual runs share QA resources. Keep only one workflow running.
+concurrency:
+  group: qa-api-regression
+  cancel-in-progress: false
+
+jobs:
+  api-tests:
+    name: QA GET endpoints (${{ matrix.role }})
+    runs-on: windows-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        role: [user, admin]
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+
+    steps:
+      - name: Check out tests
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: schemathesis/requirements.txt
+
+      - name: Install test dependencies
+        run: python -m pip install -r schemathesis/requirements.txt
+
+      - name: Prepare QA configuration
+        env:
+          ST_BASE_URL: ${{ secrets.QA_BASE_URL }}
+          ST_SPEC_URL: ${{ secrets.QA_SPEC_URL }}
+          ST_USER_EMAIL: ${{ secrets.QA_USER_EMAIL }}
+          ST_USER_PASSWORD: ${{ secrets.QA_USER_PASSWORD }}
+          ST_ADMIN_EMAIL: ${{ secrets.QA_ADMIN_EMAIL }}
+          ST_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
+          TEST_ROLE: ${{ matrix.role }}
+        run: |
+          $env:QA_ENV_FILE = Join-Path $env:RUNNER_TEMP 'qa-api.env'
+          "QA_ENV_FILE=$env:QA_ENV_FILE" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $required = @('ST_BASE_URL', 'ST_SPEC_URL', "ST_$($env:TEST_ROLE.ToUpper())_EMAIL")
+          foreach ($key in $required) {
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($key))) {
+              throw "Missing QA configuration: $key. See ci/README.md for GitHub secret names."
+            }
+          }
+          foreach ($key in @('ST_BASE_URL', 'ST_SPEC_URL')) {
+            $uri = [uri][Environment]::GetEnvironmentVariable($key)
+            if (-not $uri.IsAbsoluteUri -or $uri.Scheme -ne 'https' -or $uri.UserInfo) {
+              throw "$key must be an absolute HTTPS URL without embedded credentials."
+            }
+          }
+          $keys = @('ST_BASE_URL', 'ST_SPEC_URL', 'ST_USER_EMAIL', 'ST_USER_PASSWORD', 'ST_ADMIN_EMAIL', 'ST_ADMIN_PASSWORD')
+          $lines = foreach ($key in $keys) {
+            $value = [Environment]::GetEnvironmentVariable($key)
+            if ($value -match '[\r\n]') { throw "$key must be a single-line value." }
+            "$key=$value"
+          }
+          # run.ps1 deliberately loads configuration from a file, not inherited credentials.
+          [IO.File]::WriteAllLines($env:QA_ENV_FILE, [string[]]$lines, [Text.UTF8Encoding]::new($false))
+          # Ignore any historical run folders in the checkout when collecting this run's evidence.
+          $results = Join-Path $env:GITHUB_WORKSPACE 'schemathesis/results'
+          if (Test-Path -LiteralPath $results) {
+            $resolved = (Resolve-Path -LiteralPath $results).Path
+            $expected = [IO.Path]::GetFullPath($results)
+            if ($resolved -ne $expected) { throw 'Unexpected results directory.' }
+            Remove-Item -LiteralPath $resolved -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path $results -Force | Out-Null
+
+      - name: Refresh QA OpenAPI specification
+        run: |
+          & ./schemathesis/run.ps1 -Mode fetch -EnvFile $env:QA_ENV_FILE
+          exit $LASTEXITCODE
+
+      - name: Run scheduled API checks
+        id: api_run
+        env:
+          TEST_ROLE: ${{ matrix.role }}
+        run: |
+          & ./schemathesis/run.ps1 -Mode read -Role $env:TEST_ROLE -EnvFile $env:QA_ENV_FILE -MaxExamples 25 -RateLimit '2/s'
+          exit $LASTEXITCODE
+
+      - name: Validate evidence and prepare summary
+        if: ${{ always() && steps.api_run.outcome != 'skipped' }}
+        run: |
+          $results = Join-Path $env:GITHUB_WORKSPACE 'schemathesis/results'
+          python tools/ci_summary.py --results-dir $results --output-dir ci-artifacts
+          exit $LASTEXITCODE
+
+      - name: Save normalized evidence and summary
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-api-${{ matrix.role }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Remove temporary credentials
+        if: ${{ always() }}
+        run: |
+          $configPath = Join-Path $env:RUNNER_TEMP 'qa-api.env'
+          if (Test-Path -LiteralPath $configPath) {
+            Remove-Item -LiteralPath $configPath -Force
+          }

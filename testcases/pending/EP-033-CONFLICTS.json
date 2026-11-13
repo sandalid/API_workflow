@@ -1,0 +1,34 @@
+{
+ "conflicts": [
+  {
+   "ep": "EP-033",
+   "topic": "Sheet asserts a BA-confirmed 'customer-facing' taxonomy filter; no such filter exists in code/schema",
+   "requirement": "Sheet title: 'Verify the category tree correctly reflects only categories intended to be customer-facing, per taxonomy rules confirmed with BA.'",
+   "spec": "openapi.pretty.json:1210-1224 - no parameters, no schema, nothing representing a visibility/customer-facing filter",
+   "code": "categories.repository.ts:17-19 (findMany with no where clause); prisma/schema.prisma:543-616 (no isActive/visible/customerFacing/status field on Category/Subcategory/Type); admin/dto/create-category.dto.ts, admin/dto/update-category.dto.ts (no such field accepted on write)",
+   "affected_tcs": ["TC-033-016"],
+   "status": "Open",
+   "block": true
+  },
+  {
+   "ep": "EP-033",
+   "topic": "Legacy/off-tree categories can coexist with the curated tree with no exclusion logic, conflicting with the sheet's implied 'curated tree only' framing",
+   "requirement": "Implied by sheet title ('category tree ... customer-facing ... taxonomy rules')",
+   "spec": "N/A - no visibility/exclusion concept represented in the spec",
+   "code": "categories.repository.ts:24-29 (comment: legacy flat categories coexist with the Women/Men/Kids/Gear tree in QA); embeddings.service.ts:236-239 (comment: listings carry two taxonomies at once); no exclusion logic anywhere in findAll(). Medium confidence - code/doc comments, not an independently confirmed live-DB fact.",
+   "affected_tcs": ["TC-033-008"],
+   "status": "Open",
+   "block": true
+  },
+  {
+   "ep": "EP-033",
+   "topic": "Sheet row's title describes this endpoint as the 'category tree'; GET /categories is actually the flat list (findAll()), a distinct operation from the real tree (GET /categories/tree, getTree())",
+   "requirement": "Sheet title: '...the category tree correctly reflects...'",
+   "spec": "openapi.pretty.json:1210 (/categories) vs :1225 (/categories/tree) - two distinct operations",
+   "code": "categories.controller.ts:11-14 (findAll, this route) vs :19-22 (getTree, separate route)",
+   "affected_tcs": ["TC-033-017"],
+   "status": "Open",
+   "block": true
+  }
+ ]
+}

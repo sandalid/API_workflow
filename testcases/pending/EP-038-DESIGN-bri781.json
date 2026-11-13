@@ -1,0 +1,35 @@
+{
+  "cases": [
+    {
+      "key": "KB:BRI-781-owner-pending-approval-no-token",
+      "ep": "EP-038",
+      "scenario": "Owner's own pending_approval listing fetched with NO Authorization header (token omitted entirely) - owner-check never runs, falls through to the anonymous 404 gate",
+      "test_type": "Business Rule",
+      "role": "anon",
+      "ownership": "owner",
+      "check_level": "Business-rule",
+      "preconditions": "pending_approval fixture cmw9clny500j3u4pwwnlj09tb, owned by the ST_USER account (role 'user' per fixtures.json _owners); request sent with the Authorization header omitted entirely (not an invalid/expired token - absent)",
+      "test_data": "pending_approval=cmw9clny500j3u4pwwnlj09tb (owner=user per fixtures _owners)",
+      "steps": "GET /listings/cmw9clny500j3u4pwwnlj09tb with no Authorization header sent at all (simulates a client that forgets to attach the owner's token, e.g. the ResumeDraft.tsx pattern applied to a pending_approval listing)",
+      "expected_status": "404",
+      "response_assertions": "body.message == 'Listing not found'",
+      "business_outcome": "Confirms BRI-781: the owner-check (viewer.id === sellerId) at listings.service.ts:784-788 can only run if req.user is populated, which OptionalJwtAuthGuard only does when a valid Authorization header is present. Omitting the header on the owner's OWN pending_approval listing therefore falls through to the exact same 404 gate as a true anonymous caller - a legitimate owner is denied access to their own listing. This is distinct from TC-038-044 (CS:resume-draft-no-token), which only exercises a no-token request against a 'draft' listing; draft is never gated (Finding #1), so that case cannot exercise the owner-check at all and cannot reveal this bug. Only pending_approval (the one status the owner-check actually guards) demonstrates it.",
+      "expected": "404 'Listing not found' for the owner's own pending_approval listing when no Authorization header is sent - the server cannot distinguish this request from an anonymous one (BRI-781)",
+      "expected_source": "Documentation",
+      "requirement_status": "Confirmed",
+      "execution_method": "Schemathesis",
+      "automation": "Schemathesis",
+      "source": "qa-knowledge/modules/listings.md (BRI-781) + listings.service.ts:784-788",
+      "match": {
+        "method": "GET",
+        "path": "/listings/{id}",
+        "role": "anon",
+        "inputs": { "id": { "fixture_state": "pending_approval" } },
+        "assertions": [
+          { "type": "status", "in": [404] },
+          { "type": "body_json", "path": "message", "op": "equals", "value": "Listing not found" }
+        ]
+      }
+    }
+  ]
+}

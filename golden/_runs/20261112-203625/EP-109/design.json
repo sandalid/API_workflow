@@ -1,0 +1,359 @@
+{
+ "cases": [
+  {
+   "ep": "EP-109",
+   "key": "BR:suspended-seller-view",
+   "scenario": "Suspended seller views own profile (sheet: status clearly reflected)",
+   "test_type": "Business Rule",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Business-rule",
+   "preconditions": "Seller account suspended by admin via PATCH /admin/users/:id/suspend",
+   "test_data": "suspended seller token",
+   "steps": "GET /sellers/me with suspended seller token",
+   "expected_status": "TBD",
+   "response_assertions": "Requirement unclear: either 401 means suspended, or 200 with a status field",
+   "business_outcome": "Suspended status must be visible to the seller",
+   "expected": "Clarify expected behaviour",
+   "expected_source": "Requirement",
+   "requirement_status": "Conflict",
+   "execution_method": "Manual",
+   "source": "Sheet title; audit finding 1; Backend code (auth/strategies/jwt.strategy.ts:42); evidence: Sheet title vs code",
+   "blocked_reason": "Conflict: title implies visible suspended status, code returns 401 'Account suspended.' and body has no status field; no suspended fixture"
+  },
+  {
+   "ep": "EP-109",
+   "key": "SEC:suspended-seller-401",
+   "scenario": "Suspended seller (token issued before suspension) is rejected",
+   "test_type": "Security/Auth",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Security",
+   "preconditions": "Seller suspended after token issue",
+   "test_data": "suspended seller, old token",
+   "steps": "GET /sellers/me with old token",
+   "expected_status": "401",
+   "response_assertions": "body.message == 'Account suspended.'; no profile fields",
+   "business_outcome": "Suspended accounts cannot use the API",
+   "expected": "401 Account suspended.",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "Audit scenario 2; evidence: Backend code (jwt.strategy.ts:26-42)",
+   "blocked_reason": "No suspended-seller account/token in fixtures"
+  },
+  {
+   "ep": "EP-109",
+   "key": "RC:active-seller-profile",
+   "scenario": "Active seller views own profile",
+   "test_type": "Functional",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Response-content",
+   "preconditions": "Active seller account",
+   "test_data": "active seller token",
+   "steps": "GET /sellers/me",
+   "expected_status": "200",
+   "response_assertions": "body.shopName exists; body.isSeller == true",
+   "business_outcome": "Seller sees own profile",
+   "expected": "200 with shopName and isSeller true",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 3; evidence: Backend code (sellers.service.ts:500-523); e2e spec",
+   "match": {
+    "method": "GET",
+    "path": "/sellers/me",
+    "role": "user",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "shopName",
+      "op": "exists"
+     },
+     {
+      "type": "body_json",
+      "path": "isSeller",
+      "op": "equals",
+      "value": true
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-109",
+   "key": "KB:BR-SELLERS-008",
+   "scenario": "Payout exposed as last 4 only",
+   "test_type": "Business Rule",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Business-rule",
+   "preconditions": "Active seller with payout",
+   "test_data": "active seller token",
+   "steps": "GET /sellers/me",
+   "expected_status": "200",
+   "response_assertions": "body.payout.accountNumber absent; body.payout.accountNumberLast4 type string or payout null",
+   "business_outcome": "Full account number never returned",
+   "expected": "payout masked to last 4",
+   "expected_source": "Documentation",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "KB BR-SELLERS-008; evidence: Documentation (qa-knowledge) BR-SELLERS-008; sellers.service.ts:519",
+   "match": {
+    "method": "GET",
+    "path": "/sellers/me",
+    "role": "user",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "payout.accountNumber",
+      "op": "absent"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-109",
+   "key": "CT:no-status-field",
+   "scenario": "Check 200 body for suspended/status field",
+   "test_type": "Schema/Contract",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Contract",
+   "preconditions": "Active seller",
+   "test_data": "active seller token",
+   "steps": "GET /sellers/me",
+   "expected_status": "200",
+   "response_assertions": "Record whether suspended/status field exists (code: none)",
+   "business_outcome": "Spec has no response schema",
+   "expected": "Cannot assert",
+   "expected_source": "Requirement",
+   "requirement_status": "Conflict",
+   "execution_method": "Manual",
+   "source": "Audit scenario 4; evidence: Sheet title vs spec/code",
+   "blocked_reason": "Conflict: spec has no response schema; title requires status indicator; code has none"
+  },
+  {
+   "ep": "EP-109",
+   "key": "SEC:anon-401",
+   "scenario": "No token",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "no Authorization header",
+   "steps": "GET /sellers/me without token",
+   "expected_status": "401",
+   "response_assertions": "",
+   "business_outcome": "Unauthenticated rejected",
+   "expected": "401",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 5; evidence: Backend code (JwtAuthGuard)",
+   "match": {
+    "method": "GET",
+    "path": "/sellers/me",
+    "role": "anon",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       401
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-109",
+   "key": "SEC:non-seller-403",
+   "scenario": "Plain non-seller user",
+   "test_type": "Security/Auth",
+   "role": "user",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "User with isSeller false",
+   "test_data": "non-seller token",
+   "steps": "GET /sellers/me",
+   "expected_status": "403",
+   "response_assertions": "",
+   "business_outcome": "Only sellers",
+   "expected": "403",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "Audit scenario 6; evidence: Backend code (roles.guard.ts:60); e2e spec",
+   "blocked_reason": "No non-seller token distinct from the seller account in fixtures"
+  },
+  {
+   "ep": "EP-109",
+   "key": "SEC:admin-403",
+   "scenario": "Admin without isSeller",
+   "test_type": "Security/Auth",
+   "role": "admin",
+   "ownership": "n/a",
+   "check_level": "Security",
+   "preconditions": "Admin without isSeller",
+   "test_data": "admin token",
+   "steps": "GET /sellers/me",
+   "expected_status": "403",
+   "response_assertions": "",
+   "business_outcome": "Admin role not accepted",
+   "expected": "403",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 7; evidence: Backend code (sellers.controller.ts:130)",
+   "match": {
+    "method": "GET",
+    "path": "/sellers/me",
+    "role": "admin",
+    "inputs": {},
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       403
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-109",
+   "key": "BR:unsuspend-restores",
+   "scenario": "Unsuspended seller sees profile again",
+   "test_type": "Business Rule",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Business-rule",
+   "preconditions": "Seller suspended then restored by admin",
+   "test_data": "seller + admin tokens",
+   "steps": "1 suspend 2 unsuspend 3 GET /sellers/me",
+   "expected_status": "200",
+   "response_assertions": "body.shopName exists",
+   "business_outcome": "Restoring access",
+   "expected": "200 valid profile",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "E2E",
+   "source": "Audit scenario 8",
+   "blocked_reason": "Needs admin and suspended-seller fixtures; multi-step"
+  },
+  {
+   "ep": "EP-109",
+   "key": "NEG:extra-query-params",
+   "scenario": "Unexpected query param ?x=1",
+   "test_type": "Negative",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Status-only",
+   "preconditions": "Active seller",
+   "test_data": "active seller token",
+   "steps": "GET /sellers/me?x=1",
+   "expected_status": "200",
+   "response_assertions": "",
+   "business_outcome": "Unknown params ignored",
+   "expected": "200",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "source": "Audit scenario 9",
+   "match": {
+    "method": "GET",
+    "path": "/sellers/me",
+    "role": "user",
+    "inputs": {},
+    "generation": "negative",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-109",
+   "key": "BR:no-profile-row-404",
+   "scenario": "isSeller true but no profile row",
+   "test_type": "Business Rule",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Business-rule",
+   "preconditions": "DB inconsistency",
+   "test_data": "seller without profile",
+   "steps": "GET /sellers/me",
+   "expected_status": "404",
+   "response_assertions": "",
+   "business_outcome": "Missing profile",
+   "expected": "404",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "Audit scenario 10; evidence: Backend code (sellers.service.ts:497)",
+   "blocked_reason": "State cannot be created via fixtures"
+  },
+  {
+   "ep": "EP-109",
+   "key": "RC:legacy-seller-nulls",
+   "scenario": "Legacy seller has null new fields",
+   "test_type": "Functional",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Response-content",
+   "preconditions": "Seller onboarded before BRI-285",
+   "test_data": "legacy seller token",
+   "steps": "GET /sellers/me",
+   "expected_status": "200",
+   "response_assertions": "body.sellerType, legalName, taxIdLast4 present and null",
+   "business_outcome": "Nulls not omitted",
+   "expected": "fields null",
+   "expected_source": "Existing test",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "Audit scenario 11; evidence: Unit test sellers.service.spec.ts",
+   "blocked_reason": "No legacy seller fixture"
+  },
+  {
+   "ep": "EP-109",
+   "key": "SEC:pending-applicant-403",
+   "scenario": "Pending seller applicant (isSeller false)",
+   "test_type": "Security/Auth",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Status-only",
+   "preconditions": "Application not confirmed",
+   "test_data": "applicant token",
+   "steps": "GET /sellers/me",
+   "expected_status": "403",
+   "response_assertions": "",
+   "business_outcome": "Not yet a seller",
+   "expected": "403",
+   "expected_source": "Backend code",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "source": "Audit scenario 12; evidence: Backend code (roles.guard.ts:60)",
+   "blocked_reason": "No applicant account in fixtures"
+  }
+ ]
+}

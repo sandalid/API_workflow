@@ -1,0 +1,59 @@
+{
+ "run_id": "RUN-20261109-184418-EP-032-admin",
+ "ep": "EP-032",
+ "role": "admin",
+ "started": "2026-11-09T18:44:18",
+ "finished": "2026-11-09T18:44:29",
+ "exit_code": 1,
+ "schemathesis_version": "4.32.7",
+ "seed": 12345,
+ "environment_host": "api-qa.redspur.com",
+ "flags": "-m schemathesis.cli run D:\\API Testing\\API_Automation\\schemathesis\\spec\\openapi.run.json --url https://api-qa.redspur.com/api --checks all --max-examples 25 --continue-on-failure --rate-limit 2/s --report junit,html,ndjson --report-dir D:\\API Testing\\API_Automation\\schemathesis\\results\\RUN-20261109-184418-EP-032-admin --exclude-checks ignored_auth --seed 12345 --phases examples,coverage,fuzzing --include-path /brands --exclude-method POST --exclude-method PUT --exclude-method PATCH --exclude-method DELETE",
+ "stop_reason": "completed",
+ "phases": {
+  "probing": "success",
+  "schema_analysis": "success",
+  "auth_bootstrap": "success",
+  "examples": "skip",
+  "coverage": "failure",
+  "fuzzing": "success",
+  "stateful": "skip"
+ },
+ "auth": {
+  "role": "admin",
+  "status": "ok",
+  "bootstrap_phase": "success",
+  "method": "password",
+  "error": null
+ },
+ "execution_errors": [],
+ "interactions": 6,
+ "spec": {
+  "snapshot": "spec.snapshot.json",
+  "sha256": "8c58e57fc59f6c8d8e14fbc56d47f7ab06c9761b04bb014bde47cd5dfa9bbd6d",
+  "openapi_version": "3.0.0",
+  "info_version": "1.0",
+  "source_url_host": null
+ },
+ "fixtures": {
+  "snapshot": "fixtures.snapshot.json",
+  "sha256": "dda4cda766a80fde24fa8fa3b3b5be037c21a5fc986a67c96db2fd7005a12384",
+  "states": [
+   "active",
+   "approved",
+   "draft",
+   "inactive",
+   "pending_approval",
+   "sold"
+  ],
+  "operations": [
+   "GET /listings/{id}"
+  ]
+ },
+ "evidence_file": "evidence.json",
+ "status": "completed",
+ "redaction": {
+  "ndjson_events_masked": 2,
+  "text_files_masked": 0
+ }
+}

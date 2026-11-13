@@ -16,7 +16,7 @@ D:\Redspur_Backend\redspur-droplight.
    Backend API:  D:\Redspur_Backend\redspur-droplight\apps\api
    Mobile app:   D:\Redspur_Backend\redspur-droplight\apps\mobile  (buyer, seller, guest)
    Admin/seller web: D:\Redspur_Backend\redspur-droplight\apps\web (admin + seller back-office)
-   OpenAPI spec snapshot: schemathesis\spec\openapi.json (in the current directory)
+   OpenAPI spec snapshot: schemathesis\spec\openapi.pretty.json (in the current directory)
    Docs/tests: the repo's full-spec.md, docs\, messaging.md and the related *.spec.ts / e2e tests.
    Also search any other directory added to this session.
    Scope: the ENTIRE app and all roles (guest, buyer, seller, admin), checked against BOTH

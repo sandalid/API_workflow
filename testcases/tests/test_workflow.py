@@ -37,6 +37,10 @@ def open_text(path):
     with open(path, encoding="utf-8") as f: return f.read()
 
 
+def open_bytes(path):
+    with open(path, "rb") as f: return f.read()
+
+
 def write_text(path, text):
     with open(path, "w", encoding="utf-8") as f: f.write(text)
 
@@ -225,17 +229,49 @@ class MatcherTests(unittest.TestCase):
 
 
 # ------------------------------------------------------------------------------ workbook behaviour
+def build_legacy_workbook(path):
+    """A legacy-format (v1) workbook built from scratch: 20 columns, no history/run-log sheets, one EP-038 case and one E2E step
+    whose result was copied from an endpoint case. Self-contained: independent of the real workbook's current content."""
+    env = dict(os.environ, WORKBOOK_PATH=path, PYTHONUTF8="1")
+    r = subprocess.run([sys.executable, os.path.join(TC, "workbook.py"), "init"], env=env, capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode == 0, r.stderr
+    import workbook as W
+    from openpyxl import load_workbook
+    wb = load_workbook(path)
+    OLD = ["Key", "TC ID", "Endpoint ID", "Method", "Path", "Endpoint Title (sheet)", "Test Type", "Scenario", "Role", "Preconditions / Fixtures",
+           "Steps / Request", "Expected Result", "Actual Result", "Source", "Automation", "Last Result", "Last Run", "Run Evidence", "Bug ID", "Notes"]
+    for ws in W.module_sheets(wb):                                      # turn it into the ORIGINAL 20-column legacy layout
+        rows = [W.row_dict(ws, r) for r in range(2, ws.max_row + 1)]
+        ws.delete_rows(1, ws.max_row); ws.column_dimensions["A"].hidden = False
+        for i, h in enumerate(OLD, 1): ws.cell(1, i, h)
+        for i, d in enumerate(rows, 2):
+            for j, h in enumerate(OLD, 1):
+                f = W._legacy_field(h); ws.cell(i, j).value = d.get(f)
+    for name in ("Run Log", "Result History", "Conflicts"): del wb[name]
+    ws = wb["Listings"]; hd = {c.value: c.column for c in ws[1]}
+    row = next(r for r in range(2, ws.max_row + 1) if ws.cell(r, 1).value == "EP-038|placeholder")
+    for head, val in (("Key", "EP-038|ST:legacy"), ("TC ID", "TC-038-001"), ("Test Type", "Schemathesis"), ("Scenario", "Legacy case written by a human"),
+                      ("Role", "user"), ("Expected Result", "200"), ("Last Result", "FAIL"), ("Run Evidence", "run 1"), ("Bug ID", "BUG-EP038-01"), ("Notes", "HUMAN NOTE")):
+        ws.cell(row, hd[head]).value = val
+    fw = wb["E2E Flows"]; frow = W.find_row(fw, "FLOW-03|placeholder")
+    fw.insert_rows(frow + 1)
+    for field, val in (("key", "FLOW-03|EP-038"), ("flow", "FLOW-03"), ("endpoints", "EP-038"), ("result", "FAIL"), ("evidence", "derived from endpoint cases")):
+        W.setv(fw, frow + 1, field, val, True)
+    wb.save(path)
+
+
 class WorkbookTests(unittest.TestCase):
+    ids = {}
+
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.mkdtemp()
-        cls.src = os.path.join(TC, "Redspur_API_TestCases.xlsx")
         cls.x = os.path.join(cls.tmp, "wb.xlsx")
-        shutil.copyfile(cls.src, cls.x)
+        build_legacy_workbook(cls.x)
+        cls.legacy = os.path.join(cls.tmp, "legacy_copy.xlsx"); shutil.copyfile(cls.x, cls.legacy)      # reference: the workbook before migration
         cls.env = dict(os.environ, WORKBOOK_PATH=cls.x, FLOWS_DIR=os.path.join(cls.tmp, "flows"), PYTHONUTF8="1")
-        shutil.copytree(os.path.join(TC, "flows"), cls.env["FLOWS_DIR"])
-        from openpyxl import load_workbook
-        cls.before = load_workbook(cls.src)           # reference copy of the real workbook (read-only use)
+        os.makedirs(cls.env["FLOWS_DIR"])
+        dump({"flow_id": "FLOW-03", "name": "Flow 3", "steps": [{"key": "EP-038", "ep": "EP-038", "result": "FAIL"}]}, os.path.join(cls.env["FLOWS_DIR"], "FLOW-03.json"))
         cls.mig = cls.wb("migrate")
 
     @classmethod
@@ -259,28 +295,31 @@ class WorkbookTests(unittest.TestCase):
     def test_01_migration_preserves_existing_content(self):
         self.assertEqual(self.mig.returncode, 0, self.mig.stderr)
         import workbook as W
-        now = self.load()
-        for ws0 in W.module_sheets(self.before):
-            ws1 = now[ws0.title]
-            for r in range(1, ws0.max_row + 1):
-                for c in range(1, 21):                       # the original 20 columns are untouched
-                    self.assertEqual(ws0.cell(r, c).value, ws1.cell(r, c).value, f"{ws0.title}!{r},{c}")
+        from openpyxl import load_workbook
+        before, now = load_workbook(self.legacy), self.load()
+        for ws0 in W.module_sheets(before):
+            ws1 = now[ws0.title]; h1 = W.hdr(ws1); tcs0 = {ws0.cell(r, 2).value: r for r in range(2, ws0.max_row + 1)}
+            self.assertEqual(ws0.max_row, ws1.max_row, ws0.title)
+            for r in range(2, ws0.max_row + 1):              # every original value is still there, under the (renamed) column
+                for c in range(1, 21):
+                    f = W._legacy_field(ws0.cell(1, c).value)
+                    if f in W.CASE_F and f != "role" or f == "role":
+                        self.assertEqual(ws0.cell(r, c).value, ws1.cell(r, h1[W.HEAD[f]]).value, f"{ws0.title}!{r},{f}")
         self.assertIn("Match Spec (JSON)", W.hdr(now["Listings"]))
         self.assertTrue({"Run Log", "Result History", "Conflicts"} <= set(now.sheetnames))
-        ids = [W.getv(now["Listings"], r, "tc_id") for r in range(2, now["Listings"].max_row + 1) if W.getv(now["Listings"], r, "tc_id")]
-        self.assertEqual(len(ids), 54)                       # all 54 EP-038 cases and TC IDs intact
+        ws = now["Listings"]; row = self.rows(ws)["TC-038-001"]
+        self.assertEqual((W.getv(ws, row, "result"), W.getv(ws, row, "notes"), W.getv(ws, row, "bug_id")), ("FAIL", "HUMAN NOTE", "BUG-EP038-01"))
 
     def test_02_migration_resets_copied_e2e_results_with_history(self):
         import workbook as W
         now = self.load(); fw = now["E2E Flows"]
-        res = {W.getv(fw, r, "result", True) for r in range(2, fw.max_row + 1)}
-        self.assertEqual(res, {"NOT RUN"})
+        step = next(r for r in range(2, fw.max_row + 1) if W.getv(fw, r, "key", True) == "FLOW-03|EP-038")
+        self.assertEqual(W.getv(fw, step, "result", True), "NOT RUN"); self.assertIn("derived from endpoint cases", W.getv(fw, step, "notes", True))
         hist = now["Result History"]; kinds = [hist.cell(r, 7).value for r in range(2, hist.max_row + 1)]
         self.assertIn("migration-reset", kinds)
         flow_json = json.loads(open_text(os.path.join(self.env["FLOWS_DIR"], "FLOW-03.json")))
-        self.assertTrue(all(s.get("result") == "NOT RUN" for s in flow_json["steps"]))
-        self.assertTrue(any("previous_derived_result" in s for s in flow_json["steps"]))
-        again = self.wb("migrate"); self.assertIn("+0 columns", again.stdout)      # idempotent
+        self.assertTrue(all(s.get("result") == "NOT RUN" for s in flow_json["steps"])); self.assertEqual(flow_json["steps"][0]["previous_derived_result"], "FAIL")
+        again = self.wb("migrate"); self.assertIn("0 rows re-laid out", again.stdout)      # idempotent
 
     DESIGN = {"cases": [
         {"ep": "EP-038", "key": "T:draft-anon", "test_type": "Business Rule", "scenario": "Anon cannot read a draft", "role": "anon",
@@ -294,14 +333,16 @@ class WorkbookTests(unittest.TestCase):
          "execution_method": "Manual", "requirement_status": "Conflict", "blocked_reason": "CF: sheet vs code disagree"}]}
 
     def test_03_design_adds_not_run_or_blocked_never_results_and_is_idempotent(self):
-        r = self.wb("upsert", data=self.DESIGN); self.assertEqual(r.returncode, 0, r.stderr)
         import workbook as W
+        r = self.wb("upsert", data=self.DESIGN); self.assertEqual(r.returncode, 0, r.stderr)
+        rep = json.loads(r.stdout); WorkbookTests.ids = {"draft": rep["added"][0], "conflict": rep["added"][1]}
+        self.assertEqual(rep["added"], ["TC-038-002", "TC-038-003"])                         # numbering continues after the legacy case
         ws = self.load()["Listings"]; rows = self.rows(ws, "key")
         a, b = rows["EP-038|T:draft-anon"], rows["EP-038|T:conflict"]
         self.assertEqual(W.getv(ws, a, "result"), "NOT RUN"); self.assertEqual(W.getv(ws, b, "result"), "BLOCKED")
-        self.assertIn("sheet vs code", W.getv(ws, b, "unchecked")); self.assertEqual(W.getv(ws, a, "tc_id"), "TC-038-055")
-        r2 = self.wb("upsert", data=self.DESIGN); rep = json.loads(r2.stdout)
-        self.assertEqual(rep["added"], []); self.assertEqual(len(rep["existing_kept"]), 2)
+        self.assertIn("sheet vs code", W.getv(ws, b, "unchecked"))
+        r2 = self.wb("upsert", data=self.DESIGN); rep2 = json.loads(r2.stdout)
+        self.assertEqual(rep2["added"], []); self.assertEqual(len(rep2["existing_kept"]), 2)
         self.assertEqual(len(self.rows(self.load()["Listings"], "key")), len(rows))                  # no duplicates
 
     def test_04_design_rejects_incomplete_cases_and_keeps_human_edits(self):
@@ -316,39 +357,56 @@ class WorkbookTests(unittest.TestCase):
         ws = self.load()["Listings"]; row = self.rows(ws, "key")["EP-038|T:draft-anon"]
         self.assertEqual(W.getv(ws, row, "notes"), "HUMAN NOTE"); self.assertEqual(W.getv(ws, row, "scenario"), "Edited by a human")
 
+    def test_04b_dry_run_validates_and_writes_nothing(self):
+        import hashlib
+        h = lambda p: hashlib.md5(open_bytes(p)).hexdigest()
+        before = (h(self.x), sorted(os.listdir(os.path.join(self.tmp, "backups"))), sorted(os.listdir(self.env["FLOWS_DIR"])))
+        data = {"cases": [dict(self.DESIGN["cases"][0], key="T:dry", scenario="dry"), {"ep": "EP-038", "key": "T:dry-bad", "scenario": "x"}],
+                "flows": [{"flow": 3, "ep": "EP-038", "key": "DRY", "step": 9, "endpoints": "EP-038", "action": "x"}]}
+        r = self._upsert_dry(data)
+        rep = json.loads(r.stdout)
+        self.assertTrue(rep["dry_run"]); self.assertEqual(len(rep["added"]), 1); self.assertEqual(rep["rejected"][0]["key"], "T:dry-bad"); self.assertEqual(r.returncode, 2)
+        self.assertEqual(before, (h(self.x), sorted(os.listdir(os.path.join(self.tmp, "backups"))), sorted(os.listdir(self.env["FLOWS_DIR"]))))
+
+    def _upsert_dry(self, data):
+        p = os.path.join(self.tmp, "dry.json"); dump(data, p)
+        return subprocess.run([sys.executable, os.path.join(TC, "workbook.py"), "upsert", p, "--dry-run"], env=self.env, capture_output=True, text=True, encoding="utf-8")
+
     def _verdict(self, tc, kind, result=None, run="RUN-1", **kw):
         return dict({"tc_id": tc, "key": "x", "ep": "EP-038", "kind": kind, "result": result, "run_id": run, "evidence": f"{run}; 1 request [a1]"}, **kw)
 
     def test_05_results_history_rerun_and_not_retested(self):
         import workbook as W
+        tc = self.ids["draft"]
         r = self.wb("apply-results", data={"runs": [{"run_id": "RUN-1", "ep": "EP-038", "role": "anon", "status": "completed",
                                                     "spec": {"info_version": "v1", "sha256": "aa"}, "fixtures": {"sha256": "bb", "states": ["draft"]}}],
-                                           "verdicts": [self._verdict("TC-038-055", "executed", "FAIL", actual="status 200 expected in [404]")]})
+                                           "verdicts": [self._verdict(tc, "executed", "FAIL", actual="status 200 expected in [404]")]})
         self.assertEqual(r.returncode, 0, r.stderr)
-        ws = self.load()["Listings"]; row = self.rows(ws)["TC-038-055"]
+        ws = self.load()["Listings"]; row = self.rows(ws)[tc]
         self.assertEqual((W.getv(ws, row, "result"), W.getv(ws, row, "run_id")), ("FAIL", "RUN-1"))
         # after the fix the case is retested: PASS, previous result and run retained, history appended
         self.wb("apply-results", data={"runs": [{"run_id": "RUN-2", "ep": "EP-038", "role": "anon"}],
-                                       "verdicts": [self._verdict("TC-038-055", "executed", "PASS", run="RUN-2")]})
-        wb = self.load(); ws = wb["Listings"]; row = self.rows(ws)["TC-038-055"]
-        self.assertEqual((W.getv(ws, row, "result"), W.getv(ws, row, "previous_result"), W.getv(ws, row, "previous_run_id")), ("PASS", "FAIL", "RUN-1"))
-        h = [(wb["Result History"].cell(i, 3).value, wb["Result History"].cell(i, 5).value, wb["Result History"].cell(i, 6).value, wb["Result History"].cell(i, 8).value)
-             for i in range(2, wb["Result History"].max_row + 1) if wb["Result History"].cell(i, 3).value == "TC-038-055"]
-        self.assertIn(("TC-038-055", "FAIL", "PASS", "RUN-2"), h); self.assertIn(("TC-038-055", "NOT RUN", "FAIL", "RUN-1"), h)
+                                       "verdicts": [self._verdict(tc, "executed", "PASS", run="RUN-2")]})
+        wb = self.load(); ws = wb["Listings"]; row = self.rows(ws)[tc]
+        self.assertEqual((W.getv(ws, row, "result"), W.getv(ws, row, "run_id")), ("PASS", "RUN-2"))
+        self.assertNotIn("Previous Result", W.hdr(ws))
+        md = open(os.path.join(self.tmp, "reports", "EP-038", "results-history.md"), encoding="utf-8").read(); self.assertIn("| FAIL | PASS |", md)
+        hs = wb["Result History"]
+        h = [(hs.cell(i, 3).value, hs.cell(i, 5).value, hs.cell(i, 6).value, hs.cell(i, 8).value) for i in range(2, hs.max_row + 1) if hs.cell(i, 3).value == tc]
+        self.assertIn((tc, "FAIL", "PASS", "RUN-2"), h); self.assertIn((tc, "NOT RUN", "FAIL", "RUN-1"), h)
         # not retested / partial / blocked-attempt never regress an executed result
         for kind, extra in (("none", {}), ("partial", {"unchecked": "body not JSON"}), ("blocked", {"reason": "auth failed"})):
-            self.wb("apply-results", data={"runs": [], "verdicts": [self._verdict("TC-038-055", kind, run="RUN-3", **extra)]})
-            ws = self.load()["Listings"]; self.assertEqual(W.getv(ws, self.rows(ws)["TC-038-055"], "result"), "PASS", kind)
+            self.wb("apply-results", data={"runs": [], "verdicts": [self._verdict(tc, kind, run="RUN-3", **extra)]})
+            ws = self.load()["Listings"]; self.assertEqual(W.getv(ws, self.rows(ws)[tc], "result"), "PASS", kind)
         log = self.load()["Run Log"]; self.assertEqual([log.cell(i, 1).value for i in range(2, log.max_row + 1)][:2], ["RUN-1", "RUN-2"])
 
     def test_06_blocked_and_partial_on_unexecuted_case_and_conflicts(self):
         import workbook as W
-        # TC-038-056 is a Manual conflict case: Schemathesis verdicts must not touch it
-        r = self.wb("apply-results", data={"runs": [], "verdicts": [self._verdict("TC-038-056", "executed", "PASS", run="RUN-4")]})
-        self.assertIn("execution method is not Schemathesis", r.stdout)
-        ws = self.load()["Listings"]; row = self.rows(ws)["TC-038-056"]
+        manual = self.ids["conflict"]
+        r = self.wb("apply-results", data={"runs": [], "verdicts": [self._verdict(manual, "executed", "PASS", run="RUN-4")]})
+        self.assertIn("execution method is not Schemathesis", r.stdout)          # a Manual case is never touched by Schemathesis verdicts
+        ws = self.load()["Listings"]; row = self.rows(ws)[manual]
         self.assertEqual(W.getv(ws, row, "result"), "BLOCKED"); self.assertIn("sheet vs code", W.getv(ws, row, "unchecked"))
-        # a Schemathesis case that is only partially covered stays NOT RUN and records what remains unchecked
         d = {"cases": [dict(self.DESIGN["cases"][0], key="T:partial", scenario="partial coverage case")]}
         self.wb("upsert", data=d)
         ws = self.load()["Listings"]; tc = W.getv(ws, self.rows(ws, "key")["EP-038|T:partial"], "tc_id")
@@ -357,17 +415,17 @@ class WorkbookTests(unittest.TestCase):
         self.assertEqual(W.getv(ws, row, "result"), "NOT RUN"); self.assertIn("negative_data_rejection", W.getv(ws, row, "unchecked"))
         self.wb("apply-results", data={"runs": [], "verdicts": [self._verdict(tc, "blocked", run="RUN-5", reason="no rejected listing exists")]})
         ws = self.load()["Listings"]; row = self.rows(ws)[tc]
-        self.assertEqual((W.getv(ws, row, "result"), W.getv(ws, row, "previous_result")), ("BLOCKED", "NOT RUN"))
+        self.assertEqual(W.getv(ws, row, "result"), "BLOCKED")
         c = self.wb("conflict", data={"conflicts": [{"ep": "EP-038", "topic": "draft visibility", "requirement": "sheet: hidden", "spec": "silent",
-                                                    "code": "only pending hidden (service.ts:786)", "affected_tcs": ["TC-038-055", "TC-038-013"], "block": True}]})
+                                                    "code": "only pending hidden (service.ts:786)", "affected_tcs": [self.ids["draft"], "TC-038-001"], "block": True}]})
         out = json.loads(c.stdout)[0]
-        self.assertEqual(out["blocked"], []); self.assertEqual({x["tc_id"] for x in out["left_unchanged"]}, {"TC-038-055", "TC-038-013"})   # executed cases are not silently re-blocked
+        self.assertEqual(out["blocked"], []); self.assertEqual({x["tc_id"] for x in out["left_unchanged"]}, {self.ids["draft"], "TC-038-001"})   # executed cases are not silently re-blocked
 
     def test_07_legacy_and_e2e_rows_are_never_touched_by_results(self):
         import workbook as W
-        before = self.load(); wsb = before["Listings"]; legacy = self.rows(wsb)["TC-038-028"]
+        before = self.load(); wsb = before["Listings"]; legacy = self.rows(wsb)["TC-038-001"]
         old = (W.getv(wsb, legacy, "result"), W.getv(wsb, legacy, "evidence"))
-        r = self.wb("apply-results", data={"runs": [], "verdicts": [self._verdict("TC-038-028", "executed", "PASS", run="RUN-9")]})
+        r = self.wb("apply-results", data={"runs": [], "verdicts": [self._verdict("TC-038-001", "executed", "PASS", run="RUN-9")]})
         self.assertIn("execution method is not Schemathesis", r.stdout)
         ws = self.load()["Listings"]; self.assertEqual((W.getv(ws, legacy, "result"), W.getv(ws, legacy, "evidence")), old)
         # flow step results can only be set with a real e2e run id
@@ -413,46 +471,44 @@ class WorkbookTests(unittest.TestCase):
 
 
 # ------------------------------------------------------------------------------ saved REAL evidence (offline)
+SAVED_FIXTURES = {"_states": {"cmv95z5n803dl12gb9g5kce0w": "active", "cmw4tl67a006wu4pw9vcqawqg": "approved", "cmw4i2rr3001xu4pw4i09y143": "sold",
+                              "cmvarpj0u0067armb87izrkyx": "inactive", "cmuxnp1db03jyh9rr46n50hqp": "pending_approval", "cmugqcdly005819u5w0374t7u": "draft"},
+                  "_owners": {}}
+SAVED_SPEC = {"openapi": "3.0.0", "info": {"version": "1.0"}, "paths": {"/listings/{id}": {"get": {"responses": {"200": {"description": ""}}}}}}
+
+
 class SavedEvidenceTests(unittest.TestCase):
+    """Normalises a REAL saved run (ndjson from the first EP-038 anon run) with fixture ids and spec fixed inside this test, so
+    later changes to schemathesis/fixtures.json or the live spec cannot change the outcome."""
     RUN = "2026-11-09_1118_EP-038_anon"
 
     def setUp(self):
         src = os.path.join(ST, "results", self.RUN)
         if not glob.glob(os.path.join(src, "ndjson-*")): self.skipTest("saved EP-038 anon run not present")
-        self.tmp = tempfile.mkdtemp(); self.d = os.path.join(self.tmp, "run"); shutil.copytree(src, self.d)
-        for f in ("run.json", "evidence.json"):
-            p = os.path.join(self.d, f)
-            if os.path.exists(p): os.remove(p)
+        self.tmp = tempfile.mkdtemp(); self.d = os.path.join(self.tmp, "run")
+        os.makedirs(self.d)
+        for f in glob.glob(os.path.join(src, "ndjson-*")): shutil.copyfile(f, os.path.join(self.d, os.path.basename(f)))
+        self.spec = os.path.join(self.tmp, "spec.json"); dump(SAVED_SPEC, self.spec)
+        self.fix = os.path.join(self.tmp, "fix.json"); dump(SAVED_FIXTURES, self.fix)
 
     def tearDown(self): shutil.rmtree(self.tmp, ignore_errors=True)
 
     def test_normalise_saved_run_and_match(self):
-        spec = os.path.join(ST, "spec", "openapi.run.json")
-        if not os.path.exists(spec): spec = os.path.join(ST, "spec", "openapi.json")
-        man = X.build(self.d, "RUN-SAVED-ANON", "EP-038", "anon", spec, os.path.join(ST, "fixtures.json"),
-                      "https://api-qa.redspur.com/api", 1, "2026-11-09T11:18:00", "2026-11-09T11:19:00", "(saved)")
+        man = X.build(self.d, "RUN-SAVED-ANON", "EP-038", "anon", self.spec, self.fix, "https://api-qa.redspur.com/api", 1,
+                      "2026-11-09T11:18:00", "2026-11-09T11:19:00", "(saved)")
         self.assertGreater(man["interactions"], 30); self.assertEqual(man["auth"]["status"], "anonymous-explicit")
         run = E.load_run(self.d)
         self.assertTrue(all(not i["has_auth"] for i in run["interactions"]))
         blob = open_text(os.path.join(self.d, "run.json")) + open_text(os.path.join(self.d, "evidence.json"))
         self.assertNotIn("eyJ", blob)
         P = "/listings/{id}"
-        cases = [
-            {"tc_id": "T1", "key": "draft-anon", "ep": "EP-038", "scenario": "draft hidden from anon", "role": "anon", "execution_method": "Schemathesis",
-             "requirement_status": "Confirmed", "match": json.dumps({"method": "GET", "path": P, "role": "anon", "inputs": {"id": {"fixture_state": "draft"}},
-                                                                       "assertions": [{"type": "status", "in": [404]}]})},
-            {"tc_id": "T2", "key": "pending-anon", "ep": "EP-038", "scenario": "pending hidden", "role": "anon", "execution_method": "Schemathesis",
-             "requirement_status": "Confirmed", "match": json.dumps({"method": "GET", "path": P, "role": "anon", "inputs": {"id": {"fixture_state": "pending_approval"}},
-                                                                       "assertions": [{"type": "status", "in": [404]}]})},
-            {"tc_id": "T3", "key": "live-anon-contract", "ep": "EP-038", "scenario": "live schema", "role": "anon", "execution_method": "Schemathesis",
-             "requirement_status": "Confirmed", "match": json.dumps({"method": "GET", "path": P, "role": "anon", "inputs": {"id": {"fixture_state": "active"}},
-                                                                       "assertions": [{"type": "status", "in": [200]}, {"type": "check", "name": "response_schema_conformance"}]})},
-            {"tc_id": "T4", "key": "rejected", "ep": "EP-038", "scenario": "rejected", "role": "anon", "execution_method": "Schemathesis",
-             "requirement_status": "Confirmed", "match": json.dumps({"method": "GET", "path": P, "role": "anon", "inputs": {"id": {"fixture_state": "rejected"}},
-                                                                       "assertions": [{"type": "status", "in": [200]}]})},
-            {"tc_id": "T5", "key": "live-body", "ep": "EP-038", "scenario": "live body has id", "role": "anon", "execution_method": "Schemathesis",
-             "requirement_status": "Confirmed", "match": json.dumps({"method": "GET", "path": P, "role": "anon", "inputs": {"id": {"fixture_state": "active"}},
-                                                                       "assertions": [{"type": "status", "in": [200]}, {"type": "body_json", "path": "id", "op": "exists"}]})}]
+        def mk(tc, key, state, asserts):
+            return {"tc_id": tc, "key": key, "ep": "EP-038", "scenario": key, "role": "anon", "execution_method": "Schemathesis", "requirement_status": "Confirmed",
+                    "match": json.dumps({"method": "GET", "path": P, "role": "anon", "inputs": {"id": {"fixture_state": state}}, "assertions": asserts})}
+        cases = [mk("T1", "draft-anon", "draft", [{"type": "status", "in": [404]}]), mk("T2", "pending-anon", "pending_approval", [{"type": "status", "in": [404]}]),
+                 mk("T3", "live-contract", "active", [{"type": "status", "in": [200]}, {"type": "check", "name": "response_schema_conformance"}]),
+                 mk("T4", "rejected", "rejected", [{"type": "status", "in": [200]}]),
+                 mk("T5", "live-body", "active", [{"type": "status", "in": [200]}, {"type": "body_json", "path": "id", "op": "exists"}])]
         res = E.map_runs("EP-038", cases, [run])
         got = {v["tc_id"]: shown(v) for v in res["verdicts"]}
         # real evidence: anon got 200 for a draft (real finding), 404 for pending_approval, schema absent in the spec, no rejected listing

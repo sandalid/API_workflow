@@ -1,0 +1,57 @@
+{
+ "TC-109-001": {
+  "key": "FN:active-seller-200",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-109-002": {
+  "key": "SEC:403-admin",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-109-004": {
+  "key": "SEC:401-no-token",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-109-008": {
+  "key": "NEG:unexpected-query-params",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-109-012": {
+  "key": "COV:no-id-field",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-109-013": {
+  "key": "ST:schema-conformance",
+  "kind": "blocked",
+  "result": null
+ },
+ "TC-109-014": {
+  "key": "ST:unsupported-method:anon",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-109-015": {
+  "key": "ST:all-other:anon",
+  "kind": "executed",
+  "result": "PASS"
+ },
+ "TC-109-016": {
+  "key": "ST:unsupported_method:user",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-109-017": {
+  "key": "ST:unsupported_method:admin",
+  "kind": "executed",
+  "result": "FAIL"
+ },
+ "TC-109-018": {
+  "key": "ST:unsupported_method:anon",
+  "kind": "executed",
+  "result": "FAIL"
+ }
+}

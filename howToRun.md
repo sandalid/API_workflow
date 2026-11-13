@@ -37,7 +37,7 @@ claude --add-dir "D:\Redspur_Backend\redspur-droplight"
 - NOT RUN: not executed, or only partly checked (the case stays NOT RUN and "Unchecked / Remaining" says what is left).
 - An HTTP 200 never proves response content; a schema result applies only to Contract cases; execution errors are kept
   in the evidence and never become PASS; a case that is not retested keeps its previous result; a retested FAIL is
-  reconciled and the previous result/run stay visible (Previous Result columns + Result History tab).
+  reconciled and the previous result/run are recorded in reports\EP-NNNesults-history.md (the workbook shows only the latest result, with the real Actual status / Actual response).
 - A case whose Requirement Status is Conflict or Unclear never becomes PASS/FAIL: when it is executed it stays BLOCKED and the
   observed result is recorded ("Observed FAIL in RUN-...") until the expected behaviour is clarified (Conflicts tab).
 - A Match Spec can list several resource states (all must be exercised, otherwise the case stays NOT RUN), use `"role": "any"`
@@ -58,9 +58,37 @@ python testcases\workbook.py conflict c.json            # record a requirement/s
 ```
 `run.ps1` exit codes: 0/1 Schemathesis result, 3 credentials missing, 4 write guard, 5 authentication failed, 6 environment guard.
 
+## Keeping the AI steps honest (checks that involve no AI)
+The audit, design and analysis steps are written by agents, so their claims are re-checked by scripts:
+```
+python tools\verify_claims.py audits\EP-038.md            # every file:line exists and contains the symbol quoted next to it
+python tools\verify_claims.py --all-audits                # all audits
+python tools\verify_claims.py --refs reports\EP-038\summary.md reports\EP-038\bugs.md testcases\coverage\EP-038.md
+                                                          # every TC id / run id / bug id the text mentions really exists
+python tools\verify_claims.py --tally EP-038              # authoritative counts: workbook results + failing requests per role/check
+                                                          # (latest run per role; rate-limited or unreadable runs are flagged)
+```
+Citation statuses: `OK`, `OK_LOCATION_ONLY` (file and lines exist, nothing quoted to compare), `WARN_DRIFT` (symbol a few lines away),
+`WARN_ENCLOSING` (cited lines sit inside the quoted function), `WARN_PARTIAL`, `WARN_AMBIGUOUS`, `WARN_NOFILE` (bare `:N` with no file),
+`FAIL_FILE`, `FAIL_LINE` (past end of file), `FAIL_SYMBOL` (quoted symbol is not at those lines), `FAIL_NEGATION` (audit says "no `x`" but it is
+there). `/test-endpoint` runs these automatically: wrong citations go back to the auditor once, the triager only quotes numbers from the
+tally, and a second agent (`case-design-reviewer`) reviews the designed cases blind: it first derives what a complete design needs from the
+audit alone, and only then sees the cases. Folder roots for citations: `tools\verify_claims.config.json`.
+
+## Golden endpoints (is the workflow getting worse?)
+`golden\` holds a few endpoints with frozen evidence, frozen cases and curated "must-have" facts (see `golden\README.md`).
+```
+python tools\golden.py list                    # status; warns when agent prompts changed since the last verified golden run
+python tools\golden.py check                   # layer A, seconds: frozen cases + evidence must reproduce the frozen verdicts
+/golden-check                                  # layer B (in Claude): re-run the agents on the golden endpoints and diff against the facts
+python tools\golden.py approve EP-038 --by "Your name"     # sign off an endpoint once its facts/outcomes are reviewed
+```
+Run `/golden-check` whenever you change a file in `.claude\agents` or `.claude\commands`. Regressions are listed against the previous run.
+
 ## Verify the tooling (offline, no API calls)
 ```
 python -m unittest discover -s testcases/tests -v
+python -m unittest discover -s tools/tests -v
 ```
 
 ## Troubleshooting
@@ -83,6 +111,9 @@ testcases\              Redspur_API_TestCases.xlsx, workbook.py (all workbook wr
 testcases\flows\        FLOW-NN.json (long-term flow definitions)   testcases\coverage\  EP-NNN.md
 testcases\backups\      automatic copies before every workbook change
 reports\EP-NNN\         summary.md, bugs.md
-.claude\agents\         endpoint-usage-auditor, testcase-workbook-keeper, schemathesis-triager
-.claude\commands\       audit-endpoint (audit only), test-endpoint (full pipeline)
+tools\                  verify_claims.py (citation/reference/tally checks), golden.py, tests\
+golden\                 golden endpoints: frozen audit/cases/evidence, facts.json, REVIEW.md, _runs\ (agent check results)
+testcases\reviews\      blind inventory + independent review of the designed cases
+.claude\agents\         endpoint-usage-auditor, testcase-workbook-keeper, schemathesis-triager, case-design-reviewer
+.claude\commands\       audit-endpoint (audit only), test-endpoint (full pipeline), golden-check
 ```

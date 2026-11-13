@@ -1,0 +1,401 @@
+{
+ "cases": [
+  {
+   "ep": "EP-038",
+   "key": "SEC:cache-cross-viewer",
+   "scenario": "Cache listing:<id> shared across viewers: owner GET of pending_approval then guest GET must not leak",
+   "test_type": "Security/Auth",
+   "role": "user",
+   "ownership": "owner",
+   "check_level": "Security",
+   "preconditions": "pending_approval fixture cmw9clny500j3u4pwwnlj09tb owned by ST_USER; owner token available; no prior guest request needed; run owner first then anon",
+   "test_data": "id=cmw9clny500j3u4pwwnlj09tb; step1 role user(owner), step2 role anon (mixed-role ordered sequence)",
+   "steps": "1) GET /listings/cmw9clny500j3u4pwwnlj09tb as owner  2) immediately GET /listings/cmw9clny500j3u4pwwnlj09tb with no Authorization",
+   "req_headers": "Step1: Authorization: Bearer <ST_USER token>; Step2: none",
+   "req_body": "(none - GET, no body)",
+   "expected_status": "200 then 404",
+   "response_assertions": "Step1 body.listingStatus == 'pending_approval'; Step2 body.message == 'Listing not found' and no listing fields in body",
+   "business_outcome": "The DTO is cached under a shared key (listings.service.ts:770-778); the gate must be re-applied per viewer so a cached owner read never leaks a pending_approval listing to a guest",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "expected": "Owner GET 200, then anonymous GET 404 (no leak via cache)",
+   "source": "Blind inventory #22 / review finding #3 | QA suggestion (audit Test design inputs c/f: cache shared across viewers; re-gate test listings.service.spec.ts:999-1007)"
+  },
+  {
+   "ep": "EP-038",
+   "key": "SEC:malformed-bearer-approved",
+   "scenario": "Malformed (garbage) Bearer token on an approved listing is treated as guest: 200, no 401",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "non-owner",
+   "check_level": "Security",
+   "preconditions": "approved fixture cmw9clqi900j6u4pwojktukum; harness cannot inject an arbitrary garbage token (roles are only anon/user/admin) so run manually",
+   "test_data": "id=cmw9clqi900j6u4pwojktukum; token='Bearer not.a.jwt'",
+   "steps": "GET /listings/cmw9clqi900j6u4pwojktukum with header Authorization: Bearer not.a.jwt",
+   "req_headers": "Authorization: Bearer not.a.jwt",
+   "req_body": "(none)",
+   "expected_status": "200",
+   "response_assertions": "body.listingStatus == 'approved'; status is not 401/403",
+   "business_outcome": "OptionalJwtAuthGuard never rejects (optional-jwt-auth.guard.ts:13-17); invalid token degrades to guest",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "expected": "200 with the approved listing, no 401",
+   "source": "Audit scenario #16 / review finding #11 | QA suggestion (code behaviour optional-jwt-auth.guard.ts:14-16; no requirement source)"
+  },
+  {
+   "ep": "EP-038",
+   "key": "SEC:malformed-bearer-pending",
+   "scenario": "Malformed Bearer token on a pending_approval listing is treated as guest: 404, never 401 and never the listing",
+   "test_type": "Security/Auth",
+   "role": "anon",
+   "ownership": "non-owner",
+   "check_level": "Security",
+   "preconditions": "pending_approval fixture cmw9clny500j3u4pwwnlj09tb; harness cannot send a garbage token",
+   "test_data": "id=cmw9clny500j3u4pwwnlj09tb; token='Bearer not.a.jwt'",
+   "steps": "GET /listings/cmw9clny500j3u4pwwnlj09tb with header Authorization: Bearer not.a.jwt",
+   "req_headers": "Authorization: Bearer not.a.jwt",
+   "req_body": "(none)",
+   "expected_status": "404",
+   "response_assertions": "body.message == 'Listing not found'; no listing fields; not 401/403/5xx",
+   "business_outcome": "Invalid token is guest, so the pending_approval gate must still hide the listing",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Manual",
+   "expected": "404 Listing not found",
+   "source": "Audit scenario #16 / review finding #11 | QA suggestion (code behaviour optional-jwt-auth.guard.ts:14-16, listings.service.ts:786; no requirement source)"
+  },
+  {
+   "ep": "EP-038",
+   "key": "RC:anon-no-private-seller-fields",
+   "scenario": "Anonymous response of an approved listing exposes no private seller fields (email, phone, etc.)",
+   "test_type": "Functional",
+   "role": "anon",
+   "ownership": "non-owner",
+   "check_level": "Response-content",
+   "preconditions": "approved fixture cmw9clqi900j6u4pwojktukum",
+   "test_data": "id=cmw9clqi900j6u4pwojktukum",
+   "steps": "GET /listings/cmw9clqi900j6u4pwojktukum with no Authorization",
+   "req_headers": "(no Authorization header)",
+   "req_body": "(none)",
+   "expected_status": "200",
+   "response_assertions": "body.seller exists; body.seller.email absent; body.seller.phone absent; body.seller.passwordHash absent; body.sellerEmail absent",
+   "business_outcome": "Seller block must expose only the public mapSeller fields (id, username, displayName, avatarUrl, rating, ratingCount, salesCount, followersCount, location, lastActiveAt)",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "expected": "200; seller block has no email/phone/password fields",
+   "source": "Blind inventory #25 / review finding #12 | QA suggestion (public seller field list from audit Declared Contract, listings.service.ts:215-232; privacy expectation not in a requirement source)",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "fixture_state": "approved"
+     }
+    },
+    "generation": "positive",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "seller",
+      "op": "exists"
+     },
+     {
+      "type": "body_json",
+      "path": "seller.email",
+      "op": "absent"
+     },
+     {
+      "type": "body_json",
+      "path": "seller.phone",
+      "op": "absent"
+     },
+     {
+      "type": "body_json",
+      "path": "seller.passwordHash",
+      "op": "absent"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "NEG:malformed-long-id",
+   "scenario": "Malformed id (long-id) returns 404, never 5xx",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "id literal aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "steps": "GET /listings/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa with no Authorization",
+   "req_headers": "(no Authorization header)",
+   "req_body": "(none)",
+   "expected_status": "404",
+   "response_assertions": "status == 404 and never 5xx",
+   "business_outcome": "No format validation in code; any id string must 404 not 500 (audit d)",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "expected": "404, no server error",
+   "source": "Review finding #20 | QA suggestion (audit Test design inputs d: no id validation, 404 via not-found)",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "literal": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     },
+     {
+      "type": "check",
+      "name": "not_a_server_error"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "NEG:malformed-unicode-id",
+   "scenario": "Malformed id (unicode-id) returns 404, never 5xx",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "id literal %E2%9C%93%E2%9C%93",
+   "steps": "GET /listings/%E2%9C%93%E2%9C%93 with no Authorization",
+   "req_headers": "(no Authorization header)",
+   "req_body": "(none)",
+   "expected_status": "404",
+   "response_assertions": "status == 404 and never 5xx",
+   "business_outcome": "No format validation in code; any id string must 404 not 500 (audit d)",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "expected": "404, no server error",
+   "source": "Review finding #20 | QA suggestion (audit Test design inputs d: no id validation, 404 via not-found)",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "literal": "%E2%9C%93%E2%9C%93"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     },
+     {
+      "type": "check",
+      "name": "not_a_server_error"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "NEG:malformed-traversal-id",
+   "scenario": "Malformed id (traversal-id) returns 404, never 5xx",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "id literal ..%2F..%2Fetc%2Fpasswd",
+   "steps": "GET /listings/..%2F..%2Fetc%2Fpasswd with no Authorization",
+   "req_headers": "(no Authorization header)",
+   "req_body": "(none)",
+   "expected_status": "404",
+   "response_assertions": "status == 404 and never 5xx",
+   "business_outcome": "No format validation in code; any id string must 404 not 500 (audit d)",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "expected": "404, no server error",
+   "source": "Review finding #20 | QA suggestion (audit Test design inputs d: no id validation, 404 via not-found)",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "literal": "..%2F..%2Fetc%2Fpasswd"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     },
+     {
+      "type": "check",
+      "name": "not_a_server_error"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "NEG:malformed-space-id",
+   "scenario": "Malformed id (space-id) returns 404, never 5xx",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "none",
+   "test_data": "id literal %20%20",
+   "steps": "GET /listings/%20%20 with no Authorization",
+   "req_headers": "(no Authorization header)",
+   "req_body": "(none)",
+   "expected_status": "404",
+   "response_assertions": "status == 404 and never 5xx",
+   "business_outcome": "No format validation in code; any id string must 404 not 500 (audit d)",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "expected": "404, no server error",
+   "source": "Review finding #20 | QA suggestion (audit Test design inputs d: no id validation, 404 via not-found)",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "literal": "%20%20"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       404
+      ]
+     },
+     {
+      "type": "check",
+      "name": "not_a_server_error"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "NEG:method-head",
+   "scenario": "HEAD /listings/:id never returns 5xx",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "approved fixture cmw9clqi900j6u4pwojktukum",
+   "test_data": "id=cmw9clqi900j6u4pwojktukum",
+   "steps": "HEAD /listings/cmw9clqi900j6u4pwojktukum with no Authorization",
+   "req_headers": "(no Authorization header)",
+   "req_body": "(none)",
+   "expected_status": "200, 204, 404 or 405 (not 5xx)",
+   "response_assertions": "status in [200,204,404,405]; never 5xx",
+   "business_outcome": "Unsupported/auxiliary methods must degrade gracefully",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "expected": "Non-5xx response",
+   "source": "Review finding #20 | QA suggestion (no requirement source; Nest/nginx default behaviour)",
+   "match": {
+    "method": "HEAD",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "fixture_state": "approved"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200,
+       204,
+       404,
+       405
+      ]
+     },
+     {
+      "type": "check",
+      "name": "not_a_server_error"
+     }
+    ]
+   }
+  },
+  {
+   "ep": "EP-038",
+   "key": "NEG:method-options",
+   "scenario": "OPTIONS /listings/:id never returns 5xx",
+   "test_type": "Negative",
+   "role": "anon",
+   "ownership": "n/a",
+   "check_level": "Status-only",
+   "preconditions": "approved fixture cmw9clqi900j6u4pwojktukum",
+   "test_data": "id=cmw9clqi900j6u4pwojktukum",
+   "steps": "OPTIONS /listings/cmw9clqi900j6u4pwojktukum with no Authorization",
+   "req_headers": "(no Authorization header)",
+   "req_body": "(none)",
+   "expected_status": "200, 204, 404 or 405 (not 5xx)",
+   "response_assertions": "status in [200,204,404,405]; never 5xx",
+   "business_outcome": "Unsupported/auxiliary methods must degrade gracefully",
+   "expected_source": "QA suggestion",
+   "requirement_status": "Assumed",
+   "execution_method": "Schemathesis",
+   "expected": "Non-5xx response",
+   "source": "Review finding #20 | QA suggestion (no requirement source; Nest/nginx default behaviour)",
+   "match": {
+    "method": "OPTIONS",
+    "path": "/listings/{id}",
+    "role": "anon",
+    "inputs": {
+     "id": {
+      "fixture_state": "approved"
+     }
+    },
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200,
+       204,
+       404,
+       405
+      ]
+     },
+     {
+      "type": "check",
+      "name": "not_a_server_error"
+     }
+    ]
+   }
+  }
+ ]
+}

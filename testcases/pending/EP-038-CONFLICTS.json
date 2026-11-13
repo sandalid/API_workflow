@@ -1,24 +1,28 @@
 {
  "conflicts": [
   {
+   "id": "CF-038-02",
+   "ep": "EP-038",
+   "topic": "Soft-deleted listing for its owner / Admin",
+   "requirement": "Sheet wording implies owner/Admin can still view a removed listing",
+   "spec": "silent",
+   "code": "findFirst with NOT_DELETED: 404 for everyone incl. owner and Admin (listings.repository.ts:692-704, listing.constants.ts:60-68)",
+   "affected_tcs": ["TC-038-027", "TC-038-047", "TC-038-063"],
+   "status": "Open",
+   "decision": "Product decision needed",
+   "block": true
+  },
+  {
+   "id": "CF-038-03",
    "ep": "EP-038",
    "topic": "OpenAPI spec documents no auth/security requirement for GET /listings/:id (spec-wide pattern - 0 \"security\" occurrences repo-wide)",
    "requirement": "Not addressed by sheet; audit Test design inputs (a) / Declared Contract note the route accepts an optional Bearer token and code enforces owner/admin visibility bypasses based on it",
    "spec": "openapi.json: no 'security' field anywhere in the spec file (0 occurrences repo-wide); no @ApiBearerAuth/@ApiResponse decorators on this controller method (matches the spec's bareness pattern across the whole controller)",
    "code": "auth/guards/optional-jwt-auth.guard.ts:1-17 (OptionalJwtAuthGuard never rejects, only populates req.user if a valid token is present); listings.service.ts:784-788 (owner/admin bypass of the pending_approval gate, based on req.user.id/role)",
-   "affected_tcs": ["TC-038-051"],
+   "affected_tcs": ["TC-038-051", "TC-038-067"],
    "status": "Open",
-   "decision": "Spec-gap, repo-wide (not EP-038 specific): document auth/security requirements in the OpenAPI spec. Not resolved here per instructions."
-  },
-  {
-   "ep": "EP-038",
-   "topic": "OpenAPI spec documents no 404 response and no response schema for the 200 response of GET /listings/:id",
-   "requirement": "Not addressed by sheet",
-   "spec": "openapi.json operationId ListingsController_findById: responses == {\"200\":{\"description\":\"\"}} only - no schema for 200, no 404 (or any other status) declared at all",
-   "code": "listings.controller.ts:373-378 + listings.service.ts:769-791 return either the full toListingDto (240-306) on 200, or throw NotFoundException ('Listing not found') for (a) nonexistent id, (b) soft-deleted id, (c) pending_approval viewed by a non-owner/non-admin",
-   "affected_tcs": ["TC-038-003", "TC-038-006", "TC-038-010", "TC-038-008", "TC-038-034", "TC-038-035", "TC-038-037", "TC-038-038", "TC-038-049"],
-   "status": "Open",
-   "decision": "Spec-gap: add a 404 response and a response schema for 200 to the spec. Not resolved here per instructions."
+   "decision": "Spec-gap, repo-wide (not EP-038 specific): document auth/security requirements in the OpenAPI spec. Not resolved here per instructions.",
+   "block": true
   }
  ]
 }

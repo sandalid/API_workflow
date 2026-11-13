@@ -1,0 +1,51 @@
+{
+ "cases": [
+  {
+   "ep": "EP-038",
+   "key": "COV:rejected-admin",
+   "scenario": "Rejected listing visible (200) to Admin",
+   "test_type": "Business Rule",
+   "role": "admin",
+   "ownership": "non-owner",
+   "check_level": "Business-rule",
+   "preconditions": "rejected=cmw9clw0s00jcu4pwqqaxg3bu (fixtures.json _states); Admin token",
+   "test_data": "rejected fixture id",
+   "req_headers": "Authorization: Bearer <admin token>",
+   "req_body": "GET /listings/cmw9clw0s00jcu4pwqqaxg3bu (no query/body)",
+   "steps": "GET /listings/<rejected-id> with an Admin Bearer token",
+   "expected_status": "200",
+   "response_assertions": "body.listingStatus == 'rejected'",
+   "business_outcome": "Closes residual rejected/admin gap noted in coverage; rejected is not gated (HIDDEN_FROM_PUBLIC_STATUS is pending_approval only).",
+   "expected": "200, listingStatus 'rejected'",
+   "expected_source": "Existing test",
+   "requirement_status": "Confirmed",
+   "execution_method": "Schemathesis",
+   "source": "coverage gap; listings.service.ts:60,786",
+   "match": {
+    "method": "GET",
+    "path": "/listings/{id}",
+    "role": "admin",
+    "inputs": {
+     "id": {
+      "fixture_state": "rejected"
+     }
+    },
+    "ownership": "non_owner",
+    "assertions": [
+     {
+      "type": "status",
+      "in": [
+       200
+      ]
+     },
+     {
+      "type": "body_json",
+      "path": "listingStatus",
+      "op": "equals",
+      "value": "rejected"
+     }
+    ]
+   }
+  }
+ ]
+}
